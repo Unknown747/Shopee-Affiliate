@@ -60,7 +60,7 @@ export default function TrendingPage() {
                 <span className="absolute -top-2 -left-2 z-10 h-7 w-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow">
                   #{i + 1}
                 </span>
-                <ProductCard product={p} />
+                <ProductCard product={p} priority={i < 4} />
               </div>
             ))}
           </div>

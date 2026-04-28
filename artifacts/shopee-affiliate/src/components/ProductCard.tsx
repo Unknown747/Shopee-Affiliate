@@ -5,15 +5,47 @@ import { Product } from "@workspace/api-client-react";
 import { formatIdr, formatNumber } from "@/lib/format";
 import { useTrackProductClick } from "@workspace/api-client-react";
 import { useWishlist } from "@/hooks/use-wishlist";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
 
 interface ProductCardProps {
   product: Product;
+  /** When true, the image loads eagerly with high priority (use for above-the-fold cards) */
+  priority?: boolean;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+const prefetched = new Set<string>();
+
+export function ProductCard({ product, priority = false }: ProductCardProps) {
   const trackClick = useTrackProductClick();
   const { isInWishlist, toggle } = useWishlist();
   const inWishlist = isInWishlist(product.id);
+  const queryClient = useQueryClient();
+  const prefetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handlePrefetch = () => {
+    if (prefetched.has(product.slug)) return;
+    if (prefetchTimer.current) return;
+    prefetchTimer.current = setTimeout(() => {
+      prefetched.add(product.slug);
+      queryClient.prefetchQuery({
+        queryKey: ["GET", "/api/products/{slug}", { slug: product.slug }],
+        queryFn: async () => {
+          const res = await fetch(`/api/products/${encodeURIComponent(product.slug)}`);
+          if (!res.ok) throw new Error("prefetch failed");
+          return res.json();
+        },
+        staleTime: 60_000,
+      });
+    }, 120);
+  };
+
+  const cancelPrefetch = () => {
+    if (prefetchTimer.current) {
+      clearTimeout(prefetchTimer.current);
+      prefetchTimer.current = null;
+    }
+  };
 
   const handleOutboundClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -45,6 +77,10 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <Link
       href={`/product/${product.slug}`}
+      onMouseEnter={handlePrefetch}
+      onMouseLeave={cancelPrefetch}
+      onFocus={handlePrefetch}
+      onTouchStart={handlePrefetch}
       className="group relative block rounded-xl overflow-hidden bg-card border border-border hover:border-primary/40 hover:shadow-[0_8px_24px_-12px_rgba(238,77,45,0.25)] transition-all duration-200 h-full"
     >
       {/* Image */}
@@ -53,8 +89,9 @@ export function ProductCard({ product }: ProductCardProps) {
           src={product.imageUrl}
           alt={product.name}
           className="object-cover w-full h-full group-hover:scale-[1.04] transition-transform duration-500"
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
           decoding="async"
+          {...(priority ? { fetchpriority: "high" as const } : {})}
         />
 
         {/* Discount corner ribbon */}

@@ -341,6 +341,7 @@ export default function ProductDetail() {
                   alt={altText}
                   loading="eager"
                   decoding="async"
+                  fetchPriority="high"
                   className="w-full h-full object-cover"
                 />
               </div>

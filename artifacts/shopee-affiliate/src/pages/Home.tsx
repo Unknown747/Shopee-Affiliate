@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import {
   ArrowRight,
   Flame,
@@ -20,7 +20,9 @@ import {
 import { Layout } from "@/components/layout/Layout";
 import { SeoHead } from "@/components/SeoHead";
 import { ProductCard } from "@/components/ProductCard";
-import { LinkGenerator } from "@/components/LinkGenerator";
+const LinkGenerator = lazy(() =>
+  import("@/components/LinkGenerator").then((m) => ({ default: m.LinkGenerator })),
+);
 import {
   useListProducts,
   useListCategories,
@@ -218,7 +220,9 @@ export default function Home() {
                   Tempel link Shopee apa saja, dapatkan link afiliasi & komisi
                   dalam 1 klik.
                 </p>
-                <LinkGenerator />
+                <Suspense fallback={<Skeleton className="h-[180px] rounded-lg" />}>
+                  <LinkGenerator />
+                </Suspense>
               </div>
             </div>
           </div>
@@ -343,7 +347,7 @@ export default function Home() {
                           #{i + 1}
                         </div>
                       </div>
-                      <ProductCard product={p} />
+                      <ProductCard product={p} priority={i < 4} />
                     </div>
                   ))
                 )}
@@ -378,8 +382,8 @@ export default function Home() {
               ? Array.from({ length: 12 }).map((_, i) => (
                   <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
                 ))
-              : productsData?.products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+              : productsData?.products.map((product, idx) => (
+                  <ProductCard key={product.id} product={product} priority={idx < 4} />
                 ))}
           </div>
         </div>

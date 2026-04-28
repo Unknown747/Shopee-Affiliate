@@ -13,6 +13,7 @@ import {
   ListProductsQueryParams,
 } from "@workspace/api-zod";
 import { getCached, setCached, deleteCached } from "../services/cacheService.js";
+import { httpCache } from "../lib/httpCache.js";
 import crypto from "crypto";
 
 const router = Router();
@@ -22,7 +23,7 @@ function stripPrivateFields<T extends Record<string, unknown>>(product: T): Omit
   return rest;
 }
 
-router.get("/products", async (req, res) => {
+router.get("/products", httpCache({ maxAge: 60 }), async (req, res) => {
   try {
     const query = ListProductsQueryParams.parse(req.query);
     const { page, limit, category, sort } = query;
@@ -84,7 +85,7 @@ router.get("/products", async (req, res) => {
   }
 });
 
-router.get("/products/:slug", async (req, res) => {
+router.get("/products/:slug", httpCache({ maxAge: 120 }), async (req, res) => {
   try {
     const { slug } = GetProductBySlugParams.parse(req.params);
 
@@ -251,7 +252,7 @@ router.delete("/products/:id", async (req, res) => {
   }
 });
 
-router.get("/categories", async (req, res) => {
+router.get("/categories", httpCache({ maxAge: 300 }), async (req, res) => {
   try {
     const cacheKey = "categories";
     const cached = getCached(cacheKey);

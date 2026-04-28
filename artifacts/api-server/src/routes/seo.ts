@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { productsTable } from "@workspace/db/schema";
 import { eq, and, ne, desc, sql } from "drizzle-orm";
+import { httpCache } from "../lib/httpCache.js";
 
 const router = Router();
 
@@ -156,7 +157,7 @@ ${items}
   }
 });
 
-router.get("/stats/trending", async (req, res) => {
+router.get("/stats/trending", httpCache({ maxAge: 120 }), async (req, res) => {
   try {
     const products = await db
       .select()

@@ -3,10 +3,11 @@ import { db } from "@workspace/db";
 import { productsTable } from "@workspace/db/schema";
 import { eq, and, gte, lte, desc, asc, sql, ilike, or } from "drizzle-orm";
 import { SearchProductsQueryParams } from "@workspace/api-zod";
+import { httpCache } from "../lib/httpCache.js";
 
 const router = Router();
 
-router.get("/search", async (req, res) => {
+router.get("/search", httpCache({ maxAge: 30 }), async (req, res) => {
   try {
     const query = SearchProductsQueryParams.parse(req.query);
     const { q, category, minPrice, maxPrice, minRating, sort, page, limit } = query;
@@ -85,7 +86,7 @@ router.get("/search", async (req, res) => {
   }
 });
 
-router.get("/search/suggest", async (req, res) => {
+router.get("/search/suggest", httpCache({ maxAge: 60 }), async (req, res) => {
   try {
     const q = String(req.query["q"] ?? "").trim();
     if (q.length < 2) return res.json({ suggestions: [] });
