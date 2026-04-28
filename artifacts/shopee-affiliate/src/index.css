@@ -45,27 +45,27 @@
 }
 
 :root {
-  --background: 0 0% 98%;
-  --foreground: 240 10% 10%;
+  --background: 30 25% 98%;
+  --foreground: 222 30% 12%;
   --card: 0 0% 100%;
-  --card-foreground: 240 10% 10%;
+  --card-foreground: 222 30% 12%;
   --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 10%;
+  --popover-foreground: 222 30% 12%;
   --primary: 13 85% 55%; /* Shopee orange #ee4d2d */
   --primary-foreground: 0 0% 100%;
   --secondary: 42 100% 50%; /* Gold #ffb300 */
-  --secondary-foreground: 240 10% 10%;
-  --muted: 240 5% 96%;
-  --muted-foreground: 240 5% 45%;
-  --accent: 240 5% 96%;
-  --accent-foreground: 240 10% 10%;
+  --secondary-foreground: 222 30% 12%;
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 10% 42%;
+  --accent: 220 14% 96%;
+  --accent-foreground: 222 30% 12%;
   --destructive: 354 70% 54%;
   --destructive-foreground: 0 0% 100%;
-  --border: 240 5% 90%;
-  --input: 240 5% 90%;
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
   --ring: 13 85% 55%;
-  --radius: 0.5rem;
-  --app-font-sans: "Inter", sans-serif;
+  --radius: 0.625rem;
+  --app-font-sans: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
   --app-font-serif: "Georgia", serif;
   --app-font-mono: "Menlo", monospace;
 }
