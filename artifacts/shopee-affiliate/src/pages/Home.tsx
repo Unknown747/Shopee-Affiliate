@@ -1,16 +1,30 @@
 import { Link } from "wouter";
-import { ArrowRight, TrendingUp } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowRight, TrendingUp, Flame } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/ProductCard";
 import { LinkGenerator } from "@/components/LinkGenerator";
 import { useListProducts, useListCategories } from "@workspace/api-client-react";
+import type { Product } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+const API_BASE = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
+
 export default function Home() {
   const { data: productsData, isLoading: isLoadingProducts } = useListProducts({ limit: 8, sort: "popular" });
   const { data: categoriesData, isLoading: isLoadingCategories } = useListCategories();
+  const [trending, setTrending] = useState<Product[]>([]);
+  const [loadingTrending, setLoadingTrending] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/stats/trending`)
+      .then((r) => r.json())
+      .then((d) => setTrending((d.products ?? []).slice(0, 4)))
+      .catch(() => setTrending([]))
+      .finally(() => setLoadingTrending(false));
+  }, []);
 
   return (
     <Layout>
@@ -64,11 +78,57 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Trending Section */}
+      <section className="py-16 bg-gradient-to-br from-primary/5 to-background">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between mb-8 flex-wrap gap-3">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Flame className="h-6 w-6 text-primary" />
+                Trending Minggu Ini
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Produk paling banyak dilihat & diklik pengunjung
+              </p>
+            </div>
+            <Button variant="outline" asChild>
+              <Link href="/trending">Lihat Semua <ArrowRight className="ml-2 h-4 w-4" /></Link>
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {loadingTrending ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="space-y-4">
+                  <Skeleton className="aspect-square rounded-xl" />
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ))
+            ) : trending.length === 0 ? (
+              <p className="col-span-full text-sm text-muted-foreground text-center py-8">
+                Belum ada data trending. Silakan lihat <Link href="/search" className="text-primary underline">semua produk</Link>.
+              </p>
+            ) : (
+              trending.map((p, i) => (
+                <div key={p.id} className="relative">
+                  <span className="absolute -top-2 -left-2 z-10 h-8 w-8 rounded-full bg-primary text-primary-foreground text-sm font-bold flex items-center justify-center shadow-lg">
+                    #{i + 1}
+                  </span>
+                  <ProductCard product={p} />
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* Latest Products */}
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold">Rekomendasi Terbaru</h2>
+            <h2 className="text-2xl font-bold">Rekomendasi Pilihan</h2>
             <Button variant="outline" asChild>
               <Link href="/search">Eksplorasi <ArrowRight className="ml-2 h-4 w-4" /></Link>
             </Button>

@@ -15,6 +15,9 @@ import AdminProducts from "@/pages/AdminProducts";
 import AdminSettings from "@/pages/AdminSettings";
 import AboutPage from "@/pages/AboutPage";
 import SitemapPage from "@/pages/SitemapPage";
+import WishlistPage from "@/pages/WishlistPage";
+import ComparePage from "@/pages/ComparePage";
+import TrendingPage from "@/pages/TrendingPage";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -51,6 +54,9 @@ function Router() {
       </Route>
       <Route path="/about" component={AboutPage} />
       <Route path="/sitemap" component={SitemapPage} />
+      <Route path="/wishlist" component={WishlistPage} />
+      <Route path="/compare" component={ComparePage} />
+      <Route path="/trending" component={TrendingPage} />
       <Route component={NotFound} />
     </Switch>
   );

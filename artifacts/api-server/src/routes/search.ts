@@ -71,7 +71,10 @@ router.get("/search", async (req, res) => {
 
     const total = Number(totalResult[0]?.count ?? 0);
     return res.json({
-      products,
+      products: products.map((p) => {
+        const { commission: _c, commissionRate: _r, ...rest } = p;
+        return rest;
+      }),
       total,
       page,
       totalPages: Math.ceil(total / limit),
@@ -79,6 +82,47 @@ router.get("/search", async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Error searching products");
     return res.status(500).json({ error: "Failed to search products" });
+  }
+});
+
+router.get("/search/suggest", async (req, res) => {
+  try {
+    const q = String(req.query["q"] ?? "").trim();
+    if (q.length < 2) return res.json({ suggestions: [] });
+
+    const cacheKey = `suggest:${q.toLowerCase()}`;
+    const { getCached, setCached } = await import("../services/cacheService.js");
+    const cached = getCached(cacheKey);
+    if (cached) return res.json(cached);
+
+    const products = await db
+      .select({
+        id: productsTable.id,
+        name: productsTable.name,
+        slug: productsTable.slug,
+        imageUrl: productsTable.imageUrl,
+        price: productsTable.price,
+        category: productsTable.category,
+      })
+      .from(productsTable)
+      .where(
+        and(
+          eq(productsTable.status, "published"),
+          or(
+            ilike(productsTable.name, `%${q}%`),
+            ilike(productsTable.category, `%${q}%`),
+          )!,
+        ),
+      )
+      .orderBy(desc(productsTable.clickCount))
+      .limit(8);
+
+    const result = { suggestions: products };
+    setCached(cacheKey, result, 60);
+    return res.json(result);
+  } catch (err) {
+    req.log.error({ err }, "Error in search suggest");
+    return res.status(500).json({ error: "Failed to suggest" });
   }
 });
 

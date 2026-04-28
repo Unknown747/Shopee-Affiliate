@@ -28,8 +28,13 @@ import {
   Copy,
   Check,
   Store,
+  Heart,
+  Info,
+  GitCompare,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useWishlist } from "@/hooks/use-wishlist";
+import { useCompare } from "@/hooks/use-compare";
 import { useEffect, useMemo, useState } from "react";
 
 type RelatedProduct = {
@@ -80,6 +85,8 @@ function removeJsonLd(id: string) {
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
   const { toast } = useToast();
+  const { isInWishlist, toggle: toggleWishlist } = useWishlist();
+  const { isInCompare, toggle: toggleCompare, count: compareCount, max: compareMax } = useCompare();
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
 
@@ -443,12 +450,6 @@ export default function ProductDetail() {
               <div className="text-4xl font-bold text-primary">
                 {formatIdr(product.price)}
               </div>
-              {product.commission && (
-                <div className="text-sm text-green-600 dark:text-green-400 mt-1">
-                  Komisi: {formatIdr(product.commission)} (
-                  {product.commissionRate?.toFixed(1)}%)
-                </div>
-              )}
             </div>
 
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -477,22 +478,74 @@ export default function ProductDetail() {
               </a>
             </Button>
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full gap-2"
-              onClick={handleCopyAffiliate}
-            >
-              {linkCopied ? (
-                <>
-                  <Check className="h-4 w-4" /> Link Tersalin!
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4" /> Salin Link Afiliasi
-                </>
-              )}
-            </Button>
+            <div className="grid grid-cols-3 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={handleCopyAffiliate}
+              >
+                {linkCopied ? (
+                  <>
+                    <Check className="h-4 w-4" /> Tersalin
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" /> Salin Link
+                  </>
+                )}
+              </Button>
+              <Button
+                variant={isInWishlist(product.id) ? "default" : "outline"}
+                size="sm"
+                className="gap-1.5"
+                onClick={() => {
+                  toggleWishlist(product.id);
+                  toast({
+                    title: isInWishlist(product.id)
+                      ? "Dihapus dari Wishlist"
+                      : "Ditambahkan ke Wishlist",
+                  });
+                }}
+              >
+                <Heart
+                  className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-current" : ""}`}
+                />
+                Wishlist
+              </Button>
+              <Button
+                variant={isInCompare(product.id) ? "default" : "outline"}
+                size="sm"
+                className="gap-1.5"
+                onClick={() => {
+                  const r = toggleCompare(product.id);
+                  if (r.full) {
+                    toast({
+                      title: "Maksimal 4 produk",
+                      description: "Hapus salah satu untuk menambahkan baru.",
+                      variant: "destructive",
+                    });
+                  } else {
+                    toast({
+                      title: r.added ? "Ditambahkan ke Bandingkan" : "Dihapus dari Bandingkan",
+                    });
+                  }
+                }}
+              >
+                <GitCompare className="h-4 w-4" />
+                Bandingkan
+                {compareCount > 0 && (
+                  <span className="text-xs">({compareCount}/{compareMax})</span>
+                )}
+              </Button>
+            </div>
+
+            <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 p-3 text-xs text-amber-900 dark:text-amber-100 flex gap-2">
+              <Info className="h-4 w-4 flex-none mt-0.5" />
+              <p>
+                <strong>Pengungkapan Afiliasi:</strong> Tautan di halaman ini adalah link afiliasi. Kami mendapat komisi kecil bila Anda membeli melalui link tersebut, tanpa biaya tambahan untuk Anda. Review tetap independen.
+              </p>
+            </div>
 
             {/* Share buttons */}
             <div className="flex items-center gap-3 flex-wrap">
@@ -816,6 +869,52 @@ export default function ProductDetail() {
           </div>
         )}
       </div>
+
+      {/* Sticky mobile buy bar */}
+      <div className="fixed bottom-0 inset-x-0 z-40 md:hidden border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85 px-3 py-2.5 flex items-center gap-2 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
+        <div className="flex-1 min-w-0">
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            {product.priceBeforeDisc && discount > 0 ? `Diskon ${discount}%` : "Harga"}
+          </div>
+          <div className="text-base font-bold text-primary leading-none">
+            {formatIdr(product.price)}
+          </div>
+        </div>
+        <Button
+          size="icon"
+          variant="outline"
+          className="flex-none"
+          onClick={() => {
+            toggleWishlist(product.id);
+            toast({
+              title: isInWishlist(product.id)
+                ? "Dihapus dari Wishlist"
+                : "Ditambahkan ke Wishlist",
+            });
+          }}
+          aria-label="Tambah ke wishlist"
+        >
+          <Heart
+            className={`h-5 w-5 ${isInWishlist(product.id) ? "fill-primary text-primary" : ""}`}
+          />
+        </Button>
+        <Button
+          size="lg"
+          className="flex-1 gap-2 font-semibold"
+          asChild
+          onClick={handleBuyClick}
+        >
+          <a
+            href={product.affiliateLink}
+            target="_blank"
+            rel="sponsored nofollow noopener noreferrer"
+          >
+            <ShoppingCart className="h-5 w-5" />
+            Beli
+          </a>
+        </Button>
+      </div>
+      <div className="md:hidden h-20" aria-hidden="true" />
     </Layout>
   );
 }

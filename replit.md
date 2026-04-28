@@ -35,15 +35,32 @@ A full-stack Shopee affiliate platform with AI-powered content generation, SEO-o
 
 ## Pages
 
-- `/` — Home (hero with link generator, categories, featured products)
-- `/product/:slug` — Product detail (review, pros/cons, FAQ, share buttons)
-- `/search` — Product search with filters
+- `/` — Home (hero, link generator, trending section, categories, featured products)
+- `/product/:slug` — Product detail (review, pros/cons, FAQ, share buttons, sticky mobile buy bar, wishlist/compare/copy buttons, affiliate disclosure)
+- `/search` — Product search with filters + debounced auto-suggest dropdown
+- `/trending` — Top trending products (ranked by views/clicks)
+- `/wishlist` — User wishlist (localStorage, noindex)
+- `/compare` — Product comparison up to 4 items (localStorage, noindex)
 - `/generate` — AI content generator
 - `/admin` — Admin login
-- `/admin/dashboard` — Dashboard with analytics
+- `/admin/dashboard` — Dashboard with analytics (commission visible only here)
 - `/admin/products` — Product management (publish/delete)
 - `/about` — About + affiliate disclosure
-- `/sitemap` — Full sitemap
+- `/sitemap` — Full sitemap (HTML)
+
+## SEO Endpoints (served via vite proxy from API)
+
+- `/sitemap.xml` — XML sitemap (proxies to `/api/sitemap.xml`)
+- `/robots.txt` — Robots file (proxies to `/api/robots.txt`)
+- `/feed.xml` — RSS 2.0 feed of latest products (proxies to `/api/feed.xml`)
+- `/api/stats/trending` — Top trending products by view+click score
+- `/api/search/suggest?q=...` — Search auto-suggest
+
+## Privacy
+
+- Public product API responses strip `commission` and `commissionRate` fields (admin-only)
+- Wishlist & Compare are client-side only (localStorage, no server tracking)
+- Affiliate links use `rel="sponsored nofollow noopener noreferrer"`
 
 ## Default Admin Credentials
 

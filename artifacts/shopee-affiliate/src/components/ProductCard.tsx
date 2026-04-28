@@ -1,11 +1,12 @@
 import { Link } from "wouter";
-import { Star, ExternalLink, ShoppingCart } from "lucide-react";
+import { Star, ShoppingCart, Heart } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Product } from "@workspace/api-client-react";
 import { formatIdr, formatNumber } from "@/lib/format";
 import { useTrackProductClick } from "@workspace/api-client-react";
+import { useWishlist } from "@/hooks/use-wishlist";
 
 interface ProductCardProps {
   product: Product;
@@ -13,9 +14,17 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const trackClick = useTrackProductClick();
+  const { isInWishlist, toggle } = useWishlist();
+  const inWishlist = isInWishlist(product.id);
 
   const handleOutboundClick = () => {
     trackClick.mutate({ id: product.id, data: { referer: window.location.href } });
+  };
+
+  const handleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggle(product.id);
   };
 
   const discount = product.priceBeforeDisc && product.priceBeforeDisc > product.price
@@ -31,12 +40,23 @@ export function ProductCard({ product }: ProductCardProps) {
             alt={product.name}
             className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
+            decoding="async"
           />
           {discount > 0 && (
             <Badge variant="destructive" className="absolute top-2 right-2 font-bold">
               -{discount}%
             </Badge>
           )}
+          <button
+            type="button"
+            onClick={handleWishlist}
+            aria-label={inWishlist ? "Hapus dari wishlist" : "Tambah ke wishlist"}
+            className="absolute top-2 left-2 h-8 w-8 rounded-full bg-background/85 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background hover:text-primary transition-colors shadow-sm"
+          >
+            <Heart
+              className={`h-4 w-4 ${inWishlist ? "fill-primary text-primary" : ""}`}
+            />
+          </button>
         </div>
         <CardHeader className="p-4 pb-2 flex-none">
           <h3 className="font-semibold text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors">
@@ -74,7 +94,7 @@ export function ProductCard({ product }: ProductCardProps) {
           <a 
             href={product.affiliateLink} 
             target="_blank" 
-            rel="sponsored noopener noreferrer"
+            rel="sponsored nofollow noopener noreferrer"
           >
             <ShoppingCart className="h-4 w-4" />
             Beli di Shopee

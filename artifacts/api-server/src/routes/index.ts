@@ -6,6 +6,7 @@ import aiRouter from "./ai.js";
 import statsRouter from "./stats.js";
 import adminRouter from "./adminRoutes.js";
 import searchRouter from "./search.js";
+import seoRouter from "./seo.js";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(aiRouter);
 router.use(statsRouter);
 router.use(adminRouter);
 router.use(searchRouter);
+router.use(seoRouter);
 
 export default router;

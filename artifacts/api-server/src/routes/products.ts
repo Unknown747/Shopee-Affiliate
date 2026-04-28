@@ -17,6 +17,11 @@ import crypto from "crypto";
 
 const router = Router();
 
+function stripPrivateFields<T extends Record<string, unknown>>(product: T): Omit<T, "commission" | "commissionRate"> {
+  const { commission: _c, commissionRate: _r, ...rest } = product as T & { commission?: unknown; commissionRate?: unknown };
+  return rest;
+}
+
 router.get("/products", async (req, res) => {
   try {
     const query = ListProductsQueryParams.parse(req.query);
@@ -65,7 +70,7 @@ router.get("/products", async (req, res) => {
 
     const total = Number(totalResult[0]?.count ?? 0);
     const result = {
-      products,
+      products: products.map(stripPrivateFields),
       total,
       page,
       totalPages: Math.ceil(total / limit),
@@ -110,7 +115,7 @@ router.get("/products/:slug", async (req, res) => {
       .set({ viewCount: sql`${productsTable.viewCount} + 1` })
       .where(eq(productsTable.id, product.id));
 
-    const updatedProduct = { ...product, viewCount: product.viewCount + 1 };
+    const updatedProduct = stripPrivateFields({ ...product, viewCount: product.viewCount + 1 });
     setCached(cacheKey, updatedProduct, 1800);
     return res.json(updatedProduct);
   } catch (err) {
