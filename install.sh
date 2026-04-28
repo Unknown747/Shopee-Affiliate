@@ -63,6 +63,8 @@ NODE_MAJOR="${NODE_MAJOR:-24}"
 INSTALL_PG="${INSTALL_PG:-1}"     # set 0 untuk skip install PostgreSQL
 INSTALL_PM2="${INSTALL_PM2:-1}"   # set 0 untuk skip install PM2
 RUN_DB_PUSH="${RUN_DB_PUSH:-1}"   # set 0 untuk skip drizzle push
+AUTO_BUILD="${AUTO_BUILD:-1}"     # set 0 untuk skip pnpm run build
+AUTO_START="${AUTO_START:-1}"     # set 0 untuk skip pm2 start (cuma siap-siap saja)
 
 # -----------------------------------------------------------------------------
 # Cek OS
@@ -93,7 +95,7 @@ fi
 # -----------------------------------------------------------------------------
 # 1. Update sistem & paket dasar
 # -----------------------------------------------------------------------------
-step "1/6 Update sistem & install paket dasar"
+step "1/8 Update sistem & install paket dasar"
 export DEBIAN_FRONTEND=noninteractive
 $SUDO apt-get update -y >/dev/null
 $SUDO apt-get install -y curl wget git build-essential ca-certificates gnupg lsb-release openssl >/dev/null
@@ -102,7 +104,7 @@ ok "Paket dasar siap (curl, git, build-essential, openssl, ...)"
 # -----------------------------------------------------------------------------
 # 2. Node.js + pnpm
 # -----------------------------------------------------------------------------
-step "2/6 Install Node.js ${NODE_MAJOR} + pnpm"
+step "2/8 Install Node.js ${NODE_MAJOR} + pnpm"
 
 needs_node_install=1
 if command -v node >/dev/null 2>&1; then
@@ -133,7 +135,7 @@ ok "pnpm siap: $(pnpm -v)"
 # -----------------------------------------------------------------------------
 DATABASE_URL_GENERATED=""
 if [ "${INSTALL_PG}" = "1" ]; then
-  step "3/6 Install PostgreSQL & buat database"
+  step "3/8 Install PostgreSQL & buat database"
 
   if ! command -v psql >/dev/null 2>&1; then
     $SUDO apt-get install -y postgresql postgresql-contrib >/dev/null
@@ -169,14 +171,14 @@ SQL
     ok "Database '${DB_NAME}' dibuat"
   fi
 else
-  warn "3/6 Install PostgreSQL dilewati (INSTALL_PG=0)"
+  warn "3/8 Install PostgreSQL dilewati (INSTALL_PG=0)"
 fi
 
 # -----------------------------------------------------------------------------
 # 4. PM2
 # -----------------------------------------------------------------------------
 if [ "${INSTALL_PM2}" = "1" ]; then
-  step "4/6 Install PM2 (process manager)"
+  step "4/8 Install PM2 (process manager)"
   if command -v pm2 >/dev/null 2>&1; then
     ok "PM2 sudah terinstall: $(pm2 -v)"
   else
@@ -184,13 +186,13 @@ if [ "${INSTALL_PM2}" = "1" ]; then
     ok "PM2 terinstall: $(pm2 -v)"
   fi
 else
-  warn "4/6 Install PM2 dilewati (INSTALL_PM2=0)"
+  warn "4/8 Install PM2 dilewati (INSTALL_PM2=0)"
 fi
 
 # -----------------------------------------------------------------------------
 # 5. Buat template .env
 # -----------------------------------------------------------------------------
-step "5/6 Buat template .env"
+step "5/8 Buat template .env"
 
 if [ -f "${ENV_FILE}" ]; then
   ok ".env sudah ada di ${ENV_FILE} — tidak ditimpa"
@@ -241,7 +243,7 @@ fi
 # -----------------------------------------------------------------------------
 # 6. pnpm install + push schema database
 # -----------------------------------------------------------------------------
-step "6/6 pnpm install + push schema database"
+step "6/8 pnpm install + push schema database"
 
 cd "${PROJECT_ROOT}"
 info "Menjalankan pnpm install (3-5 menit pertama kali)…"
@@ -271,31 +273,100 @@ else
 fi
 
 # -----------------------------------------------------------------------------
+# 7. Build production
+# -----------------------------------------------------------------------------
+if [ "${AUTO_BUILD}" = "1" ]; then
+  step "7/8 Build production (pnpm run build)"
+  if pnpm run build; then
+    ok "Build sukses (artifacts/api-server/dist + artifacts/shopee-affiliate/dist)"
+  else
+    fail "Build gagal — perbaiki error lalu jalankan: pnpm run build"
+  fi
+else
+  warn "7/8 Build dilewati (AUTO_BUILD=0)"
+fi
+
+# -----------------------------------------------------------------------------
+# 8. Start dengan PM2
+# -----------------------------------------------------------------------------
+APP_STARTED=0
+if [ "${AUTO_START}" = "1" ] && [ "${AUTO_BUILD}" = "1" ] && command -v pm2 >/dev/null 2>&1; then
+  step "8/8 Start aplikasi dengan PM2"
+
+  ECOSYSTEM_FILE="${PROJECT_ROOT}/ecosystem.config.cjs"
+  if [ ! -f "${ECOSYSTEM_FILE}" ]; then
+    warn "ecosystem.config.cjs tidak ditemukan — skip pm2 start"
+  else
+    mkdir -p "${PROJECT_ROOT}/logs"
+
+    # Cek port bentrok sebelum start
+    if ss -tlnp 2>/dev/null | grep -qE ':8080\s' && ! pm2 describe shopee-api >/dev/null 2>&1; then
+      warn "Port 8080 sudah dipakai proses lain — pm2 mungkin gagal start shopee-api"
+    fi
+
+    # Start atau reload kalau sudah ada
+    if pm2 describe shopee-api >/dev/null 2>&1 || pm2 describe shopee-web >/dev/null 2>&1; then
+      info "App sudah ter-register di PM2 — reload…"
+      pm2 reload "${ECOSYSTEM_FILE}" --update-env >/dev/null
+    else
+      pm2 start "${ECOSYSTEM_FILE}" >/dev/null
+    fi
+
+    pm2 save >/dev/null 2>&1 || true
+    APP_STARTED=1
+    ok "Aplikasi jalan via PM2"
+    echo
+    pm2 status || true
+
+    # Tawarkan setup auto-start saat reboot
+    info "Untuk auto-start saat reboot, jalankan perintah berikut (sekali saja):"
+    echo "      ${C_BOLD}pm2 startup systemd${C_RESET}"
+    echo "      (lalu copy & jalankan baris 'sudo env PATH=...' yang muncul)"
+  fi
+elif [ "${AUTO_START}" = "1" ]; then
+  warn "8/8 PM2 start dilewati (PM2 atau build tidak siap)"
+else
+  warn "8/8 PM2 start dilewati (AUTO_START=0)"
+fi
+
+# -----------------------------------------------------------------------------
 # Selesai
 # -----------------------------------------------------------------------------
 echo
 echo "${C_BOLD}${C_GREEN}╔══════════════════════════════════════════════════════════════╗${C_RESET}"
-echo "${C_BOLD}${C_GREEN}║  Instalasi dasar selesai!                                    ║${C_RESET}"
+if [ "${APP_STARTED}" = "1" ]; then
+  echo "${C_BOLD}${C_GREEN}║  Instalasi selesai — aplikasi sudah JALAN via PM2!           ║${C_RESET}"
+else
+  echo "${C_BOLD}${C_GREEN}║  Instalasi dasar selesai!                                    ║${C_RESET}"
+fi
 echo "${C_BOLD}${C_GREEN}╚══════════════════════════════════════════════════════════════╝${C_RESET}"
 echo
-echo "${C_BOLD}Langkah berikutnya:${C_RESET}"
-echo "  1. Cek isi .env  :  cat ${ENV_FILE}"
-echo "     - Set ${C_BOLD}PUBLIC_BASE_URL${C_RESET} ke domain Anda"
-echo "     - Isi SHOPEE_PARTNER_* dan GEMINI_API_KEY (opsional)"
-echo
-echo "  2. Build production :  ${C_BOLD}pnpm run build${C_RESET}"
-echo
-echo "  3. Jalankan dengan PM2 (lihat ecosystem.config.cjs di INSTALL.md §9):"
-echo "     ${C_BOLD}pm2 start ecosystem.config.cjs${C_RESET}"
-echo "     ${C_BOLD}pm2 save && pm2 startup${C_RESET}"
-echo
-echo "  4. Setup Nginx + SSL :  lihat INSTALL.md §10–§11"
-echo
-echo "  5. Login admin       :  https://domain-anda.com/admin"
+
+if [ "${APP_STARTED}" = "1" ]; then
+  echo "${C_BOLD}Akses lokal (test di VPS):${C_RESET}"
+  echo "  curl http://localhost:8080/api/healthz"
+  echo "  curl -I http://localhost:25500/"
+  echo
+  echo "${C_BOLD}Langkah berikutnya:${C_RESET}"
+  echo "  1. Edit ${C_BOLD}PUBLIC_BASE_URL${C_RESET} di .env ke domain Anda → ${C_BOLD}pm2 restart all${C_RESET}"
+  echo "  2. Setup Nginx + SSL    :  lihat INSTALL.md §10–§11"
+  echo "  3. Auto-start on boot   :  ${C_BOLD}pm2 startup systemd${C_RESET}  (ikuti instruksi yang muncul)"
+  echo "  4. Login admin          :  https://domain-anda.com/admin"
+else
+  echo "${C_BOLD}Langkah berikutnya (manual):${C_RESET}"
+  echo "  1. Cek isi .env           :  cat ${ENV_FILE}"
+  echo "  2. Build production       :  ${C_BOLD}pnpm run build${C_RESET}"
+  echo "  3. Start via PM2          :  ${C_BOLD}pm2 start ecosystem.config.cjs${C_RESET}"
+  echo "  4. Auto-start saat reboot :  ${C_BOLD}pm2 save && pm2 startup systemd${C_RESET}"
+  echo "  5. Setup Nginx + SSL      :  lihat INSTALL.md §10–§11"
+fi
+
 if [ -f "${ENV_FILE}" ]; then
   admin_pw="$(grep -E '^ADMIN_PASSWORD=' "${ENV_FILE}" | cut -d= -f2- || true)"
   admin_user="$(grep -E '^ADMIN_USERNAME=' "${ENV_FILE}" | cut -d= -f2- || true)"
-  [ -n "${admin_user}" ] && echo "     username: ${admin_user}"
-  [ -n "${admin_pw}" ]   && echo "     password: ${admin_pw}"
+  echo
+  echo "${C_BOLD}Kredensial admin (tersimpan di .env):${C_RESET}"
+  [ -n "${admin_user}" ] && echo "  username : ${admin_user}"
+  [ -n "${admin_pw}" ]   && echo "  password : ${admin_pw}"
 fi
 echo
