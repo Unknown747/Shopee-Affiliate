@@ -20,7 +20,7 @@ import { useAdmin } from "@/hooks/use-admin";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { useCompare } from "@/hooks/use-compare";
 import { formatIdr } from "@/lib/format";
-import { useSiteConfig } from "@/lib/site-config";
+import { useSiteConfig, resolveBrand } from "@/lib/site-config";
 import { SiteScripts } from "@/components/SiteScripts";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 
@@ -294,6 +294,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const { count: compareCount } = useCompare();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { data: siteConfig } = useSiteConfig();
+  const brand = resolveBrand(siteConfig);
 
   useEffect(() => {
     const id = "ld-org";
@@ -305,13 +306,14 @@ export function Layout({ children }: { children: ReactNode }) {
       document.head.appendChild(el);
     }
     const cfg = siteConfig ?? {};
+    const brand = resolveBrand(cfg);
     const base =
       cfg.canonical_base_url?.replace(/\/$/, "") ||
       cfg.schema_org_url?.replace(/\/$/, "") ||
       window.location.origin;
-    const orgName =
-      cfg.schema_org_name || cfg.og_site_name || "ShopeeRecommend";
-    const logo = cfg.schema_org_logo || `${base}/favicon.ico`;
+    const orgName = brand.name;
+    const logo =
+      cfg.schema_org_logo || brand.logoUrl || `${base}/favicon.ico`;
     el.textContent = JSON.stringify({
       "@context": "https://schema.org",
       "@graph": [
@@ -364,11 +366,21 @@ export function Layout({ children }: { children: ReactNode }) {
             href="/"
             className="flex items-center gap-2 text-primary hover:text-primary/90 transition-colors flex-none"
           >
-            <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-orange-600 text-primary-foreground flex items-center justify-center shadow-md">
-              <ShoppingBag className="h-5 w-5" />
-            </div>
-            <span className="font-extrabold text-lg tracking-tight hidden sm:inline-block">
-              Shopee<span className="text-foreground">Recommend</span>
+            {brand.logoUrl ? (
+              <img
+                src={brand.logoUrl}
+                alt={brand.name}
+                className="h-9 w-9 rounded-lg object-cover shadow-md"
+                width={36}
+                height={36}
+              />
+            ) : (
+              <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-orange-600 text-primary-foreground flex items-center justify-center shadow-md">
+                <ShoppingBag className="h-5 w-5" />
+              </div>
+            )}
+            <span className="font-extrabold text-lg tracking-tight hidden sm:inline-block text-foreground">
+              {brand.name}
             </span>
           </Link>
 
@@ -554,16 +566,25 @@ export function Layout({ children }: { children: ReactNode }) {
                 href="/"
                 className="flex items-center gap-2 text-primary mb-4"
               >
-                <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-orange-600 text-primary-foreground flex items-center justify-center shadow-md">
-                  <ShoppingBag className="h-5 w-5" />
-                </div>
-                <span className="font-extrabold text-lg tracking-tight">
-                  Shopee<span className="text-foreground">Recommend</span>
+                {brand.logoUrl ? (
+                  <img
+                    src={brand.logoUrl}
+                    alt={brand.name}
+                    className="h-9 w-9 rounded-lg object-cover shadow-md"
+                    width={36}
+                    height={36}
+                  />
+                ) : (
+                  <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-orange-600 text-primary-foreground flex items-center justify-center shadow-md">
+                    <ShoppingBag className="h-5 w-5" />
+                  </div>
+                )}
+                <span className="font-extrabold text-lg tracking-tight text-foreground">
+                  {brand.name}
                 </span>
               </Link>
               <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
-                Rekomendasi produk Shopee terbaik, dikurasi objektif untuk
-                membantu Anda berbelanja lebih cerdas dan hemat.
+                {brand.tagline}
               </p>
               <div className="flex items-center gap-3 mt-5">
                 <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -660,10 +681,10 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
           <div className="border-t border-border mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
             <span>
-              &copy; {new Date().getFullYear()} ShopeeRecommend. Hak cipta
+              &copy; {new Date().getFullYear()} {brand.name}. Hak cipta
               dilindungi.
             </span>
-            <span>Dibuat dengan hati untuk pembelanja Indonesia.</span>
+            <span>{brand.footerText}</span>
           </div>
         </div>
       </footer>

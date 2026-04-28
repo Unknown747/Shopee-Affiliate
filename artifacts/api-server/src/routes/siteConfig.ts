@@ -4,6 +4,13 @@ import { getSettingsMap } from "../lib/settingsCache.js";
 const router = Router();
 
 const PUBLIC_KEYS = [
+  // Brand identity (1-click controls)
+  "brand_name",
+  "brand_tagline",
+  "brand_logo_url",
+  "brand_favicon_url",
+  "brand_primary_color",
+  "brand_footer_text",
   // Verification
   "google_sc_verification",
   "bing_verification",

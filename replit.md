@@ -88,6 +88,24 @@ A full-stack Shopee affiliate platform with AI-powered content generation, SEO-o
 - `ecosystem.config.cjs` — PM2 process file (api on 8080, web on 25500)
 - `INSTALL.md` — full VPS install guide (quick path + manual path + ops)
 
+## Identitas Brand (1-klik dari admin)
+
+Di `/admin/settings`, tab **Identitas** (tab pertama, default) memungkinkan user mengubah seluruh identitas situs dalam sekali simpan:
+
+- `brand_name` — nama website (header, footer, tab browser, og:site_name)
+- `brand_tagline` — kalimat di footer (di bawah logo)
+- `brand_logo_url` — logo gambar (override ikon default)
+- `brand_favicon_url` — favicon dinamis (PNG/SVG/ICO)
+- `brand_primary_color` — warna utama dalam hex (mis. `#ee4d2d`)
+- `brand_footer_text` — kalimat di sisi kanan footer
+
+Implementasi:
+- Helper `resolveBrand(cfg)` di `lib/site-config.ts` mengembalikan nilai brand efektif dengan fallback chain `brand_name → og_site_name → schema_org_name → "ShopeeRecommend"`.
+- `Layout.tsx` membaca `brand` untuk header/footer logo, nama, tagline, footer text, dan dynamic Org/WebSite JSON-LD.
+- `SiteScripts.tsx` mengaplikasikan favicon (`<link rel="icon">`), `meta theme-color`, dan menulis `--primary` CSS variable hasil konversi `hexToHslString()` agar Tailwind `bg-primary`/`text-primary` ikut berubah seketika.
+- `SeoHead.tsx` menggunakan `brand.name` sebagai fallback `meta_title_template` (`%s | <brand>`) dan `og:site_name`.
+- `siteConfig.ts` whitelist `PUBLIC_KEYS` mencakup semua `brand_*`. Setelah POST `/admin/settings`, server cache di-invalidate dan React Query akan refetch `useSiteConfig`.
+
 ## Configurable SEO & API Keys (admin panel)
 
 All third-party API keys and SEO settings are editable from `/admin/settings` and stored in `settings` table (key/value).

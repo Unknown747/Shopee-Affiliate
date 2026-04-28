@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useSiteConfig, applyTemplate } from "@/lib/site-config";
+import { useSiteConfig, applyTemplate, resolveBrand } from "@/lib/site-config";
 
 interface SeoHeadProps {
   title: string;
@@ -56,7 +56,11 @@ export function SeoHead({
     if (!title) return;
 
     const cfg = config ?? {};
-    const fullTitle = applyTemplate(cfg.meta_title_template, title);
+    const brand = resolveBrand(cfg);
+    // If no template is set, default to "<title> | <brand name>"
+    const template =
+      cfg.meta_title_template?.trim() || `%s | ${brand.name}`;
+    const fullTitle = applyTemplate(template, title);
     document.title = fullTitle;
 
     const desc = description || cfg.default_meta_desc || "";
@@ -86,12 +90,7 @@ export function SeoHead({
     setMeta("", "property", "og:title", fullTitle);
     setMeta("", "property", "og:description", desc);
     setMeta("", "property", "og:url", canonical);
-    setMeta(
-      "",
-      "property",
-      "og:site_name",
-      cfg.og_site_name || cfg.schema_org_name || "ShopeeRecommend",
-    );
+    setMeta("", "property", "og:site_name", brand.name);
     setMeta("", "property", "og:locale", cfg.og_locale || "id_ID");
     if (ogImage) {
       setMeta("", "property", "og:image", ogImage);

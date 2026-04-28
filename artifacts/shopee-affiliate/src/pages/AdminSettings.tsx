@@ -23,6 +23,9 @@ import {
   AlertCircle,
   Save,
   Key,
+  Sparkles,
+  Image as ImageIcon,
+  Palette,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -180,8 +183,11 @@ export default function AdminSettings() {
           </p>
         </div>
 
-        <Tabs defaultValue="api-keys">
-          <TabsList className="grid grid-cols-2 md:grid-cols-6 h-auto gap-1 bg-muted p-1">
+        <Tabs defaultValue="brand">
+          <TabsList className="grid grid-cols-2 md:grid-cols-7 h-auto gap-1 bg-muted p-1">
+            <TabsTrigger value="brand" className="gap-1.5 text-xs">
+              <Sparkles className="h-3.5 w-3.5" /> Identitas
+            </TabsTrigger>
             <TabsTrigger value="api-keys" className="gap-1.5 text-xs">
               <Key className="h-3.5 w-3.5" /> API Keys
             </TabsTrigger>
@@ -201,6 +207,153 @@ export default function AdminSettings() {
               <Code2 className="h-3.5 w-3.5" /> Schema.org
             </TabsTrigger>
           </TabsList>
+
+          {/* ── IDENTITAS BRAND ── */}
+          <TabsContent value="brand" className="space-y-6 mt-6">
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg p-4">
+              <div className="flex gap-2">
+                <Sparkles className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="text-sm text-amber-800 dark:text-amber-200">
+                  Ubah <strong>nama, tagline, logo, favicon, warna utama, dan teks footer</strong> situs Anda di sini.
+                  Cukup simpan satu kali — header, footer, judul tab browser, favicon, dan warna utama akan otomatis ikut berubah di seluruh halaman.
+                </div>
+              </div>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <SectionHeader
+                  icon={Sparkles}
+                  title="Identitas Brand"
+                  description="Pengaturan utama tampilan website. Satu klik mengubah seluruh situs."
+                />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <SettingField
+                  label="Nama Website"
+                  settingKey="brand_name"
+                  placeholder="ShopeeRecommend"
+                  description="Tampil di header, footer, judul tab browser, dan tag og:site_name."
+                  value={settings["brand_name"] ?? ""}
+                  onChange={set}
+                />
+                <SettingField
+                  label="Tagline / Deskripsi Singkat"
+                  settingKey="brand_tagline"
+                  type="textarea"
+                  placeholder="Rekomendasi produk Shopee terbaik, dikurasi objektif..."
+                  description="Teks pendek yang muncul di footer di bawah logo."
+                  value={settings["brand_tagline"] ?? ""}
+                  onChange={set}
+                />
+                <SettingField
+                  label="URL Logo"
+                  settingKey="brand_logo_url"
+                  placeholder="https://yourdomain.com/logo.png"
+                  description="URL gambar logo (idealnya persegi, minimal 36×36px). Kosongkan untuk pakai ikon default."
+                  value={settings["brand_logo_url"] ?? ""}
+                  onChange={set}
+                />
+                <SettingField
+                  label="URL Favicon"
+                  settingKey="brand_favicon_url"
+                  placeholder="https://yourdomain.com/favicon.svg"
+                  description="Ikon kecil yang muncul di tab browser. Format .svg/.png/.ico."
+                  value={settings["brand_favicon_url"] ?? ""}
+                  onChange={set}
+                />
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="brand_primary_color" className="flex items-center gap-2">
+                      <Palette className="h-4 w-4" /> Warna Utama
+                    </Label>
+                    {settings["brand_primary_color"] && (
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      id="brand_primary_color_picker"
+                      value={settings["brand_primary_color"] || "#ee4d2d"}
+                      onChange={(e) => set("brand_primary_color", e.target.value)}
+                      className="h-10 w-14 rounded-md border border-input cursor-pointer bg-transparent"
+                    />
+                    <Input
+                      id="brand_primary_color"
+                      value={settings["brand_primary_color"] ?? ""}
+                      onChange={(e) => set("brand_primary_color", e.target.value)}
+                      placeholder="#ee4d2d"
+                      className="font-mono"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Warna utama brand (format hex seperti <code>#ee4d2d</code>). Diaplikasikan ke tombol, link, badge, dan theme-color browser.
+                  </p>
+                </div>
+
+                <SettingField
+                  label="Teks Footer"
+                  settingKey="brand_footer_text"
+                  placeholder="Dibuat dengan hati untuk pembelanja Indonesia."
+                  description="Kalimat di sisi kanan footer (di samping copyright)."
+                  value={settings["brand_footer_text"] ?? ""}
+                  onChange={set}
+                />
+
+                <div className="rounded-lg border border-border bg-muted/30 p-4">
+                  <div className="flex items-start gap-3">
+                    {settings["brand_logo_url"] ? (
+                      <img
+                        src={settings["brand_logo_url"]}
+                        alt="Preview logo"
+                        className="h-12 w-12 rounded-lg object-cover border border-border"
+                      />
+                    ) : (
+                      <div
+                        className="h-12 w-12 rounded-lg flex items-center justify-center text-white font-bold shadow-sm"
+                        style={{ backgroundColor: settings["brand_primary_color"] || "#ee4d2d" }}
+                      >
+                        <ImageIcon className="h-6 w-6" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="font-extrabold text-lg leading-tight truncate">
+                        {settings["brand_name"] || "ShopeeRecommend"}
+                      </div>
+                      <div className="text-xs text-muted-foreground line-clamp-2">
+                        {settings["brand_tagline"] || "Tagline akan tampil di sini."}
+                      </div>
+                      <div className="mt-2 inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                        Warna:{" "}
+                        <span
+                          className="inline-block h-3 w-3 rounded-full border border-border"
+                          style={{ backgroundColor: settings["brand_primary_color"] || "#ee4d2d" }}
+                        />
+                        <code>{settings["brand_primary_color"] || "#ee4d2d"}</code>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => saveSection([
+                    { key: "brand_name", description: "Nama website / brand" },
+                    { key: "brand_tagline", description: "Tagline / deskripsi singkat brand" },
+                    { key: "brand_logo_url", description: "URL logo brand" },
+                    { key: "brand_favicon_url", description: "URL favicon" },
+                    { key: "brand_primary_color", description: "Warna utama (hex)" },
+                    { key: "brand_footer_text", description: "Teks footer" },
+                  ], "Identitas Brand")}
+                  disabled={isSaving}
+                  className="gap-2 w-full sm:w-auto"
+                >
+                  <Save className="h-4 w-4" /> Simpan Identitas Brand
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* ── API KEYS ── */}
           <TabsContent value="api-keys" className="space-y-6 mt-6">

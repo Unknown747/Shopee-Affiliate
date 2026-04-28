@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useSiteConfig } from "@/lib/site-config";
+import { useSiteConfig, resolveBrand, hexToHslString } from "@/lib/site-config";
 
 function ensureMeta(name: string, content: string) {
   if (!content) return;
@@ -31,6 +31,46 @@ function ensureInlineScript(id: string, code: string) {
 
 export function SiteScripts() {
   const { data: config } = useSiteConfig();
+
+  // Apply brand identity (favicon, primary color, theme-color) as soon as config arrives
+  useEffect(() => {
+    const brand = resolveBrand(config);
+
+    // Favicon
+    if (brand.faviconUrl) {
+      let link = document.head.querySelector<HTMLLinkElement>(
+        'link[rel="icon"]',
+      );
+      if (!link) {
+        link = document.createElement("link");
+        link.rel = "icon";
+        document.head.appendChild(link);
+      }
+      link.href = brand.faviconUrl;
+      link.type = brand.faviconUrl.endsWith(".svg")
+        ? "image/svg+xml"
+        : brand.faviconUrl.endsWith(".png")
+          ? "image/png"
+          : brand.faviconUrl.endsWith(".ico")
+            ? "image/x-icon"
+            : "";
+    }
+
+    // Primary color → CSS var (HSL) + theme-color meta
+    const hsl = hexToHslString(brand.primaryColor);
+    if (hsl) {
+      document.documentElement.style.setProperty("--primary", hsl);
+    }
+    let tc = document.head.querySelector<HTMLMetaElement>(
+      'meta[name="theme-color"]',
+    );
+    if (!tc) {
+      tc = document.createElement("meta");
+      tc.setAttribute("name", "theme-color");
+      document.head.appendChild(tc);
+    }
+    tc.setAttribute("content", brand.primaryColor);
+  }, [config]);
 
   useEffect(() => {
     if (!config) return;
