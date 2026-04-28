@@ -20,6 +20,9 @@ import { useAdmin } from "@/hooks/use-admin";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { useCompare } from "@/hooks/use-compare";
 import { formatIdr } from "@/lib/format";
+import { useSiteConfig } from "@/lib/site-config";
+import { SiteScripts } from "@/components/SiteScripts";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 
 const API_BASE = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
 
@@ -290,6 +293,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const { count: wishlistCount } = useWishlist();
   const { count: compareCount } = useCompare();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const { data: siteConfig } = useSiteConfig();
 
   useEffect(() => {
     const id = "ld-org";
@@ -300,19 +304,36 @@ export function Layout({ children }: { children: ReactNode }) {
       (el as HTMLScriptElement).type = "application/ld+json";
       document.head.appendChild(el);
     }
-    const base = window.location.origin;
+    const cfg = siteConfig ?? {};
+    const base =
+      cfg.canonical_base_url?.replace(/\/$/, "") ||
+      cfg.schema_org_url?.replace(/\/$/, "") ||
+      window.location.origin;
+    const orgName =
+      cfg.schema_org_name || cfg.og_site_name || "ShopeeRecommend";
+    const logo = cfg.schema_org_logo || `${base}/favicon.ico`;
     el.textContent = JSON.stringify({
       "@context": "https://schema.org",
       "@graph": [
         {
-          "@type": "Organization",
-          name: "ShopeeRecommend",
+          "@type": cfg.schema_org_type || "Organization",
+          name: orgName,
           url: base,
-          logo: `${base}/favicon.ico`,
+          logo,
+          ...(cfg.schema_site_desc ? { description: cfg.schema_site_desc } : {}),
+          ...(cfg.schema_contact_email
+            ? {
+                contactPoint: {
+                  "@type": "ContactPoint",
+                  email: cfg.schema_contact_email,
+                  contactType: "customer support",
+                },
+              }
+            : {}),
         },
         {
           "@type": "WebSite",
-          name: "ShopeeRecommend",
+          name: orgName,
           url: base,
           potentialAction: {
             "@type": "SearchAction",
@@ -322,7 +343,7 @@ export function Layout({ children }: { children: ReactNode }) {
         },
       ],
     });
-  }, []);
+  }, [siteConfig]);
 
   const navLinks = [
     { href: "/", label: "Beranda" },
@@ -333,6 +354,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background text-foreground">
+      <SiteScripts />
       <PromoBar />
 
       <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-sm">
@@ -480,7 +502,7 @@ export function Layout({ children }: { children: ReactNode }) {
         )}
       </header>
 
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col pb-16 md:pb-0">
         {isAdmin ? (
           <div className="container mx-auto px-4 py-8 flex-1 grid md:grid-cols-[200px_1fr] gap-8">
             <aside className="space-y-2">
@@ -641,10 +663,12 @@ export function Layout({ children }: { children: ReactNode }) {
               &copy; {new Date().getFullYear()} ShopeeRecommend. Hak cipta
               dilindungi.
             </span>
-            <span>Dibuat dengan ❤️ untuk pembelanja Indonesia.</span>
+            <span>Dibuat dengan hati untuk pembelanja Indonesia.</span>
           </div>
         </div>
       </footer>
+
+      <MobileBottomNav />
     </div>
   );
 }

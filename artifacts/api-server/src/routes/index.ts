@@ -7,6 +7,7 @@ import statsRouter from "./stats.js";
 import adminRouter from "./adminRoutes.js";
 import searchRouter from "./search.js";
 import seoRouter from "./seo.js";
+import siteConfigRouter from "./siteConfig.js";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(statsRouter);
 router.use(adminRouter);
 router.use(searchRouter);
 router.use(seoRouter);
+router.use(siteConfigRouter);
 
 export default router;

@@ -18,6 +18,7 @@ import {
   Package,
 } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
+import { SeoHead } from "@/components/SeoHead";
 import { ProductCard } from "@/components/ProductCard";
 import { LinkGenerator } from "@/components/LinkGenerator";
 import {
@@ -129,6 +130,11 @@ export default function Home() {
 
   return (
     <Layout>
+      <SeoHead
+        title="Beranda — Rekomendasi Produk Shopee Terbaik"
+        description="Rekomendasi produk Shopee terbaik yang dikurasi objektif: handphone, fashion, peralatan rumah, kecantikan, dan banyak lagi. Update harga & promo gratis ongkir tiap hari."
+        type="website"
+      />
       {/* HERO ============================================================ */}
       <section className="relative overflow-hidden">
         {/* Background gradient + decorative blobs */}

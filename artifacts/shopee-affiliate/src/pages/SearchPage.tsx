@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useSearch, useLocation } from "wouter";
 import { Layout } from "@/components/layout/Layout";
+import { SeoHead } from "@/components/SeoHead";
 import { ProductCard } from "@/components/ProductCard";
 import { useSearchProducts, useListCategories } from "@workspace/api-client-react";
 import { Input } from "@/components/ui/input";
@@ -41,12 +42,29 @@ export default function SearchPage() {
     setLocation(`/search?${newParams.toString()}`);
   };
 
+  const qParam = params.get("q");
+  const catParam = params.get("category");
+  const seoTitle = qParam
+    ? `Hasil pencarian "${qParam}"`
+    : catParam
+      ? `Produk kategori ${catParam}`
+      : "Semua Produk Pilihan";
+  const seoDesc = qParam
+    ? `Temukan produk Shopee terbaik untuk "${qParam}" dengan harga & rating terbaik. Update tiap hari di ShopeeRecommend.`
+    : "Jelajahi seluruh katalog produk Shopee pilihan kami: harga terbaik, rating tinggi, dan banyak pilihan gratis ongkir.";
+
   return (
     <Layout>
+      <SeoHead
+        title={seoTitle}
+        description={seoDesc}
+        type="website"
+        noindex={Boolean(qParam)}
+      />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">
-            {params.get("q") ? `Hasil pencarian: "${params.get("q")}"` : "Semua Produk"}
+            {qParam ? `Hasil pencarian: "${qParam}"` : "Semua Produk"}
           </h1>
           {data && (
             <p className="text-muted-foreground">{data.total} produk ditemukan</p>

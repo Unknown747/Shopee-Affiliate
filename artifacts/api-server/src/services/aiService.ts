@@ -1,7 +1,17 @@
 import { logger } from "../lib/logger.js";
+import { getSetting } from "../lib/settingsCache.js";
 
-const GEMINI_API_KEY = process.env["GEMINI_API_KEY"] || "";
-const HUGGINGFACE_API_KEY = process.env["HUGGINGFACE_API_KEY"] || "";
+async function getGeminiKey(): Promise<string> {
+  return (
+    process.env["GEMINI_API_KEY"] || (await getSetting("gemini_api_key"))
+  );
+}
+async function getHuggingFaceKey(): Promise<string> {
+  return (
+    process.env["HUGGINGFACE_API_KEY"] ||
+    (await getSetting("huggingface_api_key"))
+  );
+}
 
 export interface GeneratedContent {
   reviewContent: string;
@@ -78,8 +88,9 @@ Berikan respons dalam format JSON yang valid dengan struktur:
 
 WAJIB minimal 6 FAQ yang relevan dengan produk ini.`;
 
+  const geminiKey = await getGeminiKey();
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -129,7 +140,7 @@ Include pros, cons, FAQ, meta title and description.`;
     {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${HUGGINGFACE_API_KEY}`,
+        Authorization: `Bearer ${await getHuggingFaceKey()}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -271,7 +282,10 @@ Kalau Anda masih ragu, saya sarankan untuk membeli dari toko official atau toko 
 export async function generateProductContent(
   params: GenerateContentParams,
 ): Promise<GeneratedContent> {
-  if (GEMINI_API_KEY) {
+  const geminiKey = await getGeminiKey();
+  const hfKey = await getHuggingFaceKey();
+
+  if (geminiKey) {
     try {
       logger.info({ productName: params.productName }, "Generating content with Gemini");
       return await generateWithGemini(params);
@@ -280,7 +294,7 @@ export async function generateProductContent(
     }
   }
 
-  if (HUGGINGFACE_API_KEY) {
+  if (hfKey) {
     try {
       logger.info({ productName: params.productName }, "Generating content with HuggingFace");
       return await generateWithHuggingFace(params);

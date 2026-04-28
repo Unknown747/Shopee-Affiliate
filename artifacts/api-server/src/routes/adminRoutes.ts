@@ -116,6 +116,8 @@ router.get("/admin/settings", verifyAdminToken, async (req, res) => {
 router.post("/admin/settings", verifyAdminToken, async (req, res) => {
   try {
     const body = UpsertSettingBody.parse(req.body);
+    const { invalidateSettingsCache } = await import("../lib/settingsCache.js");
+    invalidateSettingsCache();
 
     const existing = await db
       .select()

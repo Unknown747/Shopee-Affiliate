@@ -17,6 +17,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ProductCard } from "@/components/ProductCard";
+import { SeoHead } from "@/components/SeoHead";
 import {
   Star,
   ShoppingCart,
@@ -123,36 +124,19 @@ export default function ProductDetail() {
 
   const heroImage = activeImage || product?.imageUrl || "";
 
-  // SEO: title, meta tags, JSON-LD structured data
+  // SEO: JSON-LD structured data (title/desc/og handled by <SeoHead/>)
   useEffect(() => {
     if (!product) return;
     const url = window.location.href;
     const title =
       product.metaTitle ||
-      `Review ${product.name} - Harga & Kelebihan | Shopee Affiliate`;
-    document.title = title;
-
+      `Review ${product.name} - Harga & Kelebihan`;
     const desc =
       product.metaDesc ||
       `Review lengkap ${product.name}: pengalaman pakai, kelebihan, kekurangan, FAQ, dan harga ${formatIdr(product.price)}. Cek sebelum beli di Shopee!`;
 
-    setMeta("description", desc);
+    // tags as keywords (still useful)
     setMeta("keywords", (product.tags ?? []).join(", "));
-
-    // Open Graph
-    setMeta("og:title", title, "property");
-    setMeta("og:description", desc, "property");
-    setMeta("og:image", product.imageUrl, "property");
-    setMeta("og:type", "product", "property");
-    setMeta("og:url", url, "property");
-
-    // Twitter
-    setMeta("twitter:card", "summary_large_image");
-    setMeta("twitter:title", title);
-    setMeta("twitter:description", desc);
-    setMeta("twitter:image", product.imageUrl);
-
-    setCanonical(url);
 
     // JSON-LD: Product
     const productLd: Record<string, unknown> = {
@@ -306,12 +290,23 @@ export default function ProductDetail() {
   }
 
   const discount = getDiscountPercent(product.price, product.priceBeforeDisc ?? 0);
+  const seoTitle =
+    product.metaTitle || `Review ${product.name} - Harga & Kelebihan`;
+  const seoDesc =
+    product.metaDesc ||
+    `Review lengkap ${product.name}: pengalaman pakai, kelebihan, kekurangan, FAQ, dan harga ${formatIdr(product.price)}. Cek sebelum beli di Shopee!`;
   const altText = product.category
     ? `${product.name} - ${product.category} di Shopee`
     : `${product.name} di Shopee`;
 
   return (
     <Layout>
+      <SeoHead
+        title={seoTitle}
+        description={seoDesc}
+        image={product.imageUrl}
+        type="product"
+      />
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Breadcrumb */}
         <nav

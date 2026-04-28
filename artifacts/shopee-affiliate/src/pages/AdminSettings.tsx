@@ -22,6 +22,7 @@ import {
   BarChart3,
   AlertCircle,
   Save,
+  Key,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -179,8 +180,11 @@ export default function AdminSettings() {
           </p>
         </div>
 
-        <Tabs defaultValue="search-engines">
-          <TabsList className="grid grid-cols-2 md:grid-cols-5 h-auto gap-1 bg-muted p-1">
+        <Tabs defaultValue="api-keys">
+          <TabsList className="grid grid-cols-2 md:grid-cols-6 h-auto gap-1 bg-muted p-1">
+            <TabsTrigger value="api-keys" className="gap-1.5 text-xs">
+              <Key className="h-3.5 w-3.5" /> API Keys
+            </TabsTrigger>
             <TabsTrigger value="search-engines" className="gap-1.5 text-xs">
               <Search className="h-3.5 w-3.5" /> Search Engine
             </TabsTrigger>
@@ -197,6 +201,144 @@ export default function AdminSettings() {
               <Code2 className="h-3.5 w-3.5" /> Schema.org
             </TabsTrigger>
           </TabsList>
+
+          {/* ── API KEYS ── */}
+          <TabsContent value="api-keys" className="space-y-6 mt-6">
+            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg p-4">
+              <div className="flex gap-2">
+                <AlertCircle className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-800 dark:text-blue-200">
+                  Variabel environment server (mis. <code>SHOPEE_PARTNER_ID</code>)
+                  selalu lebih diutamakan jika diset. Jika kosong, sistem akan
+                  membaca nilai dari sini sebagai fallback (cache 30 detik).
+                </div>
+              </div>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <SectionHeader
+                  icon={Key}
+                  title="Shopee Affiliate API"
+                  description="Kredensial untuk membuat link afiliasi otomatis melalui API resmi Shopee."
+                />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <SettingField
+                  label="Shopee Partner ID"
+                  settingKey="shopee_partner_id"
+                  placeholder="contoh: 18000000123"
+                  description="App ID dari Shopee Affiliate Open Platform."
+                  docsUrl="https://affiliate.shopee.co.id/open_api"
+                  value={settings["shopee_partner_id"] ?? ""}
+                  onChange={set}
+                />
+                <SettingField
+                  label="Shopee Partner Key (Secret)"
+                  settingKey="shopee_partner_key"
+                  placeholder="contoh: ABCDEF1234567890..."
+                  description="App Secret dari Shopee Affiliate Open Platform. Disimpan di database."
+                  value={settings["shopee_partner_key"] ?? ""}
+                  onChange={set}
+                />
+                <SettingField
+                  label="Shopee API URL"
+                  settingKey="shopee_api_url"
+                  placeholder="https://open-api.affiliate.shopee.com/graphql"
+                  description="Endpoint GraphQL API Shopee Affiliate. Default: open-api.affiliate.shopee.com/graphql."
+                  value={settings["shopee_api_url"] ?? ""}
+                  onChange={set}
+                />
+                <Button
+                  onClick={() =>
+                    saveSection(
+                      [
+                        { key: "shopee_partner_id", description: "Shopee Affiliate Partner ID" },
+                        { key: "shopee_partner_key", description: "Shopee Affiliate Partner Key" },
+                        { key: "shopee_api_url", description: "Shopee Affiliate API URL" },
+                      ],
+                      "Shopee API",
+                    )
+                  }
+                  disabled={isSaving}
+                  className="gap-2"
+                >
+                  <Save className="h-4 w-4" /> Simpan Shopee API
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <SectionHeader
+                  icon={Key}
+                  title="AI Provider — Gemini (Google)"
+                  description="API key untuk generate review otomatis menggunakan Gemini 1.5 Flash."
+                />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <SettingField
+                  label="Gemini API Key"
+                  settingKey="gemini_api_key"
+                  placeholder="AIza..."
+                  description="Dapatkan gratis dari Google AI Studio."
+                  docsUrl="https://aistudio.google.com/app/apikey"
+                  value={settings["gemini_api_key"] ?? ""}
+                  onChange={set}
+                />
+                <Button
+                  onClick={() =>
+                    saveSection(
+                      [{ key: "gemini_api_key", description: "Google Gemini API Key" }],
+                      "Gemini API",
+                    )
+                  }
+                  disabled={isSaving}
+                  className="gap-2"
+                >
+                  <Save className="h-4 w-4" /> Simpan Gemini
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <SectionHeader
+                  icon={Key}
+                  title="AI Provider — Hugging Face (fallback)"
+                  description="API token Hugging Face untuk fallback bila Gemini gagal/tidak tersedia."
+                />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <SettingField
+                  label="Hugging Face API Token"
+                  settingKey="huggingface_api_key"
+                  placeholder="hf_..."
+                  description="User Access Token (Read) dari akun Hugging Face Anda."
+                  docsUrl="https://huggingface.co/settings/tokens"
+                  value={settings["huggingface_api_key"] ?? ""}
+                  onChange={set}
+                />
+                <Button
+                  onClick={() =>
+                    saveSection(
+                      [
+                        {
+                          key: "huggingface_api_key",
+                          description: "Hugging Face API token",
+                        },
+                      ],
+                      "Hugging Face",
+                    )
+                  }
+                  disabled={isSaving}
+                  className="gap-2"
+                >
+                  <Save className="h-4 w-4" /> Simpan Hugging Face
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* ── SEARCH ENGINES ── */}
           <TabsContent value="search-engines" className="space-y-6 mt-6">

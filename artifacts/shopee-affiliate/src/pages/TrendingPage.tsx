@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { TrendingUp, Flame } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
+import { SeoHead } from "@/components/SeoHead";
 import { ProductCard } from "@/components/ProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Product } from "@workspace/api-client-react";
@@ -12,16 +13,6 @@ export default function TrendingPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    document.title = "Produk Trending Minggu Ini - ShopeeRecommend";
-    let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
-    if (!meta) {
-      meta = document.createElement("meta");
-      meta.name = "description";
-      document.head.appendChild(meta);
-    }
-    meta.content =
-      "Daftar produk paling banyak diklik dan dilihat pengunjung minggu ini. Update otomatis berdasarkan minat pembaca.";
-
     fetch(`${API_BASE}/api/stats/trending`)
       .then((r) => r.json())
       .then((data) => setProducts(data.products ?? []))
@@ -31,6 +22,10 @@ export default function TrendingPage() {
 
   return (
     <Layout>
+      <SeoHead
+        title="Produk Trending Minggu Ini"
+        description="Daftar produk paling banyak diklik dan dilihat pengunjung minggu ini. Update otomatis berdasarkan minat pembaca."
+      />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold flex items-center gap-2">

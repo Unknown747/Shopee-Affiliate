@@ -1,11 +1,22 @@
 import crypto from "crypto";
 import { logger } from "../lib/logger.js";
+import { getSetting } from "../lib/settingsCache.js";
 
-const SHOPEE_PARTNER_ID = process.env["SHOPEE_PARTNER_ID"] || "";
-const SHOPEE_PARTNER_KEY = process.env["SHOPEE_PARTNER_KEY"] || "";
-const SHOPEE_API_URL =
-  process.env["SHOPEE_API_URL"] ||
-  "https://open-api.affiliate.shopee.com/graphql";
+async function getCreds() {
+  const partnerId =
+    process.env["SHOPEE_PARTNER_ID"] ||
+    (await getSetting("shopee_partner_id"));
+  const partnerKey =
+    process.env["SHOPEE_PARTNER_KEY"] ||
+    (await getSetting("shopee_partner_key"));
+  const apiUrl =
+    process.env["SHOPEE_API_URL"] ||
+    (await getSetting(
+      "shopee_api_url",
+      "https://open-api.affiliate.shopee.com/graphql",
+    ));
+  return { partnerId, partnerKey, apiUrl };
+}
 
 export interface ShopeeProductInfo {
   shopeeId: string;
@@ -24,18 +35,21 @@ export interface ShopeeProductInfo {
   affiliateLink: string;
 }
 
-function generateSignature(payload: string, timestamp: number): string {
-  const signString = `${SHOPEE_PARTNER_ID}${timestamp}${payload}`;
-  return crypto
-    .createHmac("sha256", SHOPEE_PARTNER_KEY)
-    .update(signString)
-    .digest("hex");
+function generateSignature(
+  partnerId: string,
+  partnerKey: string,
+  payload: string,
+  timestamp: number,
+): string {
+  const signString = `${partnerId}${timestamp}${payload}`;
+  return crypto.createHmac("sha256", partnerKey).update(signString).digest("hex");
 }
 
 export async function generateAffiliateLink(
   originalUrl: string,
 ): Promise<ShopeeProductInfo> {
-  if (!SHOPEE_PARTNER_ID || !SHOPEE_PARTNER_KEY) {
+  const { partnerId, partnerKey, apiUrl } = await getCreds();
+  if (!partnerId || !partnerKey) {
     logger.warn("Shopee API credentials not configured, using mock data");
     return generateMockProduct(originalUrl);
   }
@@ -55,14 +69,14 @@ export async function generateAffiliateLink(
     }
   `;
 
-  const signature = generateSignature(query, timestamp);
+  const signature = generateSignature(partnerId, partnerKey, query, timestamp);
 
   try {
-    const response = await fetch(SHOPEE_API_URL, {
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `SHA256 Credential=${SHOPEE_PARTNER_ID}, Timestamp=${timestamp}, Signature=${signature}`,
+        Authorization: `SHA256 Credential=${partnerId}, Timestamp=${timestamp}, Signature=${signature}`,
       },
       body: JSON.stringify({ query }),
     });
