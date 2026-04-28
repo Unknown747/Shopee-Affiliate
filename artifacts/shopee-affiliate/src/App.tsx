@@ -1,24 +1,26 @@
-import type * as React from "react";
+import { lazy, Suspense, type ComponentType } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { getAdminToken } from "@/hooks/use-admin";
 import { Redirect } from "wouter";
-import Home from "@/pages/Home";
-import ProductDetail from "@/pages/ProductDetail";
-import SearchPage from "@/pages/SearchPage";
-import GeneratePage from "@/pages/GeneratePage";
-import AdminLogin from "@/pages/AdminLogin";
-import AdminDashboard from "@/pages/AdminDashboard";
-import AdminProducts from "@/pages/AdminProducts";
-import AdminSettings from "@/pages/AdminSettings";
-import AboutPage from "@/pages/AboutPage";
-import SitemapPage from "@/pages/SitemapPage";
-import WishlistPage from "@/pages/WishlistPage";
-import ComparePage from "@/pages/ComparePage";
-import TrendingPage from "@/pages/TrendingPage";
-import NotFound from "@/pages/not-found";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const Home = lazy(() => import("@/pages/Home"));
+const ProductDetail = lazy(() => import("@/pages/ProductDetail"));
+const SearchPage = lazy(() => import("@/pages/SearchPage"));
+const GeneratePage = lazy(() => import("@/pages/GeneratePage"));
+const AdminLogin = lazy(() => import("@/pages/AdminLogin"));
+const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
+const AdminProducts = lazy(() => import("@/pages/AdminProducts"));
+const AdminSettings = lazy(() => import("@/pages/AdminSettings"));
+const AboutPage = lazy(() => import("@/pages/AboutPage"));
+const SitemapPage = lazy(() => import("@/pages/SitemapPage"));
+const WishlistPage = lazy(() => import("@/pages/WishlistPage"));
+const ComparePage = lazy(() => import("@/pages/ComparePage"));
+const TrendingPage = lazy(() => import("@/pages/TrendingPage"));
+const NotFound = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,10 +31,20 @@ const queryClient = new QueryClient({
   },
 });
 
-function AdminGuard({ component: Component }: { component: () => React.ReactElement }) {
+function AdminGuard({ component: Component }: { component: ComponentType }) {
   const token = getAdminToken();
   if (!token) return <Redirect to="/admin" />;
   return <Component />;
+}
+
+function PageFallback() {
+  return (
+    <div className="container mx-auto p-6 space-y-4">
+      <Skeleton className="h-8 w-1/3" />
+      <Skeleton className="h-64 w-full" />
+      <Skeleton className="h-64 w-full" />
+    </div>
+  );
 }
 
 function Router() {
@@ -67,7 +79,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
+          <Suspense fallback={<PageFallback />}>
+            <Router />
+          </Suspense>
         </WouterRouter>
         <Toaster />
       </TooltipProvider>

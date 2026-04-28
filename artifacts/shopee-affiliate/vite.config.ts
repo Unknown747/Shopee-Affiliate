@@ -53,6 +53,26 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (id.includes("recharts") || id.includes("d3-")) return "charts";
+          if (id.includes("@radix-ui")) return "radix";
+          if (id.includes("react-hook-form") || id.includes("@hookform")) return "forms";
+          if (id.includes("react-dom")) return "react-dom";
+          if (
+            id.includes("/react/") ||
+            id.includes("scheduler") ||
+            id.includes("wouter") ||
+            id.includes("@tanstack/react-query")
+          )
+            return "react-core";
+          return "vendor";
+        },
+      },
+    },
   },
   server: {
     port,
