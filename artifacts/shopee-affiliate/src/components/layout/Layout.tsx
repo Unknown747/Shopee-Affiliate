@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Search, Menu, Moon, Sun, ShoppingBag } from "lucide-react";
+import { Search, Moon, Sun, ShoppingBag, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { useAdmin } from "@/hooks/use-admin";
@@ -76,6 +76,16 @@ export function Layout({ children }: { children: ReactNode }) {
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${location === "/generate" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
                 >
                   AI Content
+                </Link>
+                <div className="pt-2 pb-1">
+                  <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Konfigurasi</p>
+                </div>
+                <Link 
+                  href="/admin/settings" 
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${location === "/admin/settings" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                >
+                  <Settings className="h-4 w-4" />
+                  Pengaturan SEO
                 </Link>
               </nav>
             </aside>

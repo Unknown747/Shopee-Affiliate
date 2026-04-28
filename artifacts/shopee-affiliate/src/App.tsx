@@ -11,6 +11,7 @@ import GeneratePage from "@/pages/GeneratePage";
 import AdminLogin from "@/pages/AdminLogin";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AdminProducts from "@/pages/AdminProducts";
+import AdminSettings from "@/pages/AdminSettings";
 import AboutPage from "@/pages/AboutPage";
 import SitemapPage from "@/pages/SitemapPage";
 import NotFound from "@/pages/not-found";
@@ -43,6 +44,9 @@ function Router() {
       </Route>
       <Route path="/admin/products">
         {() => <AdminGuard component={AdminProducts} />}
+      </Route>
+      <Route path="/admin/settings">
+        {() => <AdminGuard component={AdminSettings} />}
       </Route>
       <Route path="/about" component={AboutPage} />
       <Route path="/sitemap" component={SitemapPage} />
