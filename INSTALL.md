@@ -280,6 +280,14 @@ GEMINI_API_KEY=
 # === Port internal (jangan diubah kecuali bentrok) ===
 API_PORT=8080
 WEB_PORT=25500
+
+# === Tuning PostgreSQL pool (opsional) ===
+# Jumlah koneksi maksimum ke DB per proses Node.
+PG_POOL_MAX=10
+# Berapa lama (ms) koneksi idle ditutup.
+PG_IDLE_TIMEOUT_MS=30000
+# Timeout (ms) saat connect ke DB.
+PG_CONNECT_TIMEOUT_MS=5000
 ```
 
 Generate `SESSION_SECRET`:
