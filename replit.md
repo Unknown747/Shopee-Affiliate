@@ -77,9 +77,15 @@ A full-stack Shopee affiliate platform with AI-powered content generation, SEO-o
 ## Key Commands
 
 - `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
+- `pnpm run build` — typecheck + build all packages (excludes `mockup-sandbox`, a Replit dev-only artifact)
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - `pnpm --filter @workspace/api-server run dev` — run API server locally
+
+## VPS Deployment
+
+- `install.sh` — one-click installer for fresh Ubuntu/Debian VPS (apt deps, Node 24, PostgreSQL, PM2, auto-`.env`, build, start)
+- `ecosystem.config.cjs` — PM2 process file (api on 8080, web on 25500)
+- `INSTALL.md` — full VPS install guide (quick path + manual path + ops)
 
 See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
