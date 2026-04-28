@@ -1,3 +1,4 @@
+import type * as React from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -25,7 +26,7 @@ const queryClient = new QueryClient({
   },
 });
 
-function AdminGuard({ component: Component }: { component: () => JSX.Element }) {
+function AdminGuard({ component: Component }: { component: () => React.ReactElement }) {
   const token = getAdminToken();
   if (!token) return <Redirect to="/admin" />;
   return <Component />;
