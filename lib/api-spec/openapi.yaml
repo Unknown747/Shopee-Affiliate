@@ -2,21 +2,32 @@ openapi: 3.1.0
 info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
-  description: API specification
+  version: 1.0.0
+  description: Shopee Affiliate Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: products
+    description: Product management
+  - name: affiliate
+    description: Affiliate link generation
+  - name: ai
+    description: AI content generation
+  - name: stats
+    description: Analytics and statistics
+  - name: admin
+    description: Admin operations
+  - name: search
+    description: Search and filter
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +35,406 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: List all published products
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 12
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [newest, cheapest, rating, popular]
+      responses:
+        "200":
+          description: List of products
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductListResponse"
+
+  /products/{slug}:
+    get:
+      operationId: getProductBySlug
+      tags: [products]
+      summary: Get product detail by slug
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Product detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /products/{id}/click:
+    post:
+      operationId: trackProductClick
+      tags: [products]
+      summary: Track affiliate link click
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClickTrackRequest"
+      responses:
+        "200":
+          description: Click tracked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClickTrackResponse"
+
+  /products/{id}/publish:
+    post:
+      operationId: publishProduct
+      tags: [products]
+      summary: Publish a product
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Product published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  /products/{id}:
+    patch:
+      operationId: updateProduct
+      tags: [products]
+      summary: Update product content
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProductBody"
+      responses:
+        "200":
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+    delete:
+      operationId: deleteProduct
+      tags: [products]
+      summary: Delete a product
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Product deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /affiliate/generate:
+    post:
+      operationId: generateAffiliateLink
+      tags: [affiliate]
+      summary: Generate affiliate link from Shopee product URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateAffiliateBody"
+      responses:
+        "200":
+          description: Affiliate link generated and product saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AffiliateGenerateResponse"
+        "400":
+          description: Invalid URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /ai/generate-content:
+    post:
+      operationId: generateAiContent
+      tags: [ai]
+      summary: Generate AI review content for a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateContentBody"
+      responses:
+        "200":
+          description: Content generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateContentResponse"
+        "500":
+          description: AI generation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stats/dashboard:
+    get:
+      operationId: getDashboardStats
+      tags: [stats]
+      summary: Get dashboard statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /stats/top-products:
+    get:
+      operationId: getTopProducts
+      tags: [stats]
+      summary: Get top 10 most clicked products
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Top products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopProduct"
+
+  /stats/clicks-chart:
+    get:
+      operationId: getClicksChart
+      tags: [stats]
+      summary: Get daily click data for chart
+      parameters:
+        - in: query
+          name: days
+          schema:
+            type: integer
+            default: 30
+      responses:
+        "200":
+          description: Click chart data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClickChartPoint"
+
+  /search:
+    get:
+      operationId: searchProducts
+      tags: [search]
+      summary: Search products
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: minPrice
+          schema:
+            type: integer
+        - in: query
+          name: maxPrice
+          schema:
+            type: integer
+        - in: query
+          name: minRating
+          schema:
+            type: number
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [newest, cheapest, rating, popular]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductListResponse"
+
+  /categories:
+    get:
+      operationId: listCategories
+      tags: [products]
+      summary: List all product categories
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryCount"
+
+  /admin/products:
+    get:
+      operationId: adminListProducts
+      tags: [admin]
+      summary: Admin list all products (draft + published)
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [draft, published, all]
+            default: all
+      responses:
+        "200":
+          description: All products
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductListResponse"
+
+  /admin/login:
+    post:
+      operationId: adminLogin
+      tags: [admin]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminLoginBody"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminLoginResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/settings:
+    get:
+      operationId: getSettings
+      tags: [admin]
+      summary: Get all settings
+      responses:
+        "200":
+          description: Settings list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Setting"
+    post:
+      operationId: upsertSetting
+      tags: [admin]
+      summary: Create or update a setting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertSettingBody"
+      responses:
+        "200":
+          description: Setting upserted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Setting"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +442,397 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required: [error]
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required: [success]
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        shopeeId:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        price:
+          type: integer
+        priceBeforeDisc:
+          type: integer
+          nullable: true
+        commission:
+          type: integer
+          nullable: true
+        commissionRate:
+          type: number
+          nullable: true
+        imageUrl:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+          nullable: true
+        shopName:
+          type: string
+          nullable: true
+        shopRating:
+          type: number
+          nullable: true
+        ratingStar:
+          type: number
+          nullable: true
+        soldCount:
+          type: integer
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+        affiliateLink:
+          type: string
+        reviewContent:
+          type: string
+          nullable: true
+        pros:
+          type: array
+          items:
+            type: string
+          nullable: true
+        cons:
+          type: array
+          items:
+            type: string
+          nullable: true
+        faq:
+          type: array
+          items:
+            $ref: "#/components/schemas/FaqItem"
+          nullable: true
+        metaTitle:
+          type: string
+          nullable: true
+        metaDesc:
+          type: string
+          nullable: true
+        viewCount:
+          type: integer
+        clickCount:
+          type: integer
+        conversionCount:
+          type: integer
+        status:
+          type: string
+        createdAt:
+          type: string
+        lastUpdated:
+          type: string
+        publishedAt:
+          type: string
+          nullable: true
+      required:
+        - id
+        - shopeeId
+        - name
+        - slug
+        - price
+        - imageUrl
+        - affiliateLink
+        - viewCount
+        - clickCount
+        - conversionCount
+        - status
+        - createdAt
+        - lastUpdated
+
+    FaqItem:
+      type: object
+      properties:
+        question:
+          type: string
+        answer:
+          type: string
+      required: [question, answer]
+
+    ProductListResponse:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+        total:
+          type: integer
+        page:
+          type: integer
+        totalPages:
+          type: integer
+      required: [products, total, page, totalPages]
+
+    GenerateAffiliateBody:
+      type: object
+      properties:
+        url:
+          type: string
+      required: [url]
+
+    AffiliateGenerateResponse:
+      type: object
+      properties:
+        product:
+          $ref: "#/components/schemas/Product"
+        isNew:
+          type: boolean
+      required: [product, isNew]
+
+    ClickTrackRequest:
+      type: object
+      properties:
+        referer:
+          type: string
+          nullable: true
+
+    ClickTrackResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        affiliateLink:
+          type: string
+      required: [success, affiliateLink]
+
+    UpdateProductBody:
+      type: object
+      properties:
+        reviewContent:
+          type: string
+          nullable: true
+        pros:
+          type: array
+          items:
+            type: string
+          nullable: true
+        cons:
+          type: array
+          items:
+            type: string
+          nullable: true
+        faq:
+          type: array
+          items:
+            $ref: "#/components/schemas/FaqItem"
+          nullable: true
+        metaTitle:
+          type: string
+          nullable: true
+        metaDesc:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+
+    GenerateContentBody:
+      type: object
+      properties:
+        productId:
+          type: string
+          nullable: true
+        productName:
+          type: string
+        productCategory:
+          type: string
+          nullable: true
+        productDescription:
+          type: string
+          nullable: true
+        price:
+          type: integer
+          nullable: true
+      required: [productName]
+
+    GenerateContentResponse:
+      type: object
+      properties:
+        reviewContent:
+          type: string
+        pros:
+          type: array
+          items:
+            type: string
+        cons:
+          type: array
+          items:
+            type: string
+        faq:
+          type: array
+          items:
+            $ref: "#/components/schemas/FaqItem"
+        metaTitle:
+          type: string
+        metaDesc:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+      required: [reviewContent, pros, cons, faq, metaTitle, metaDesc, tags]
+
+    DashboardStats:
+      type: object
+      properties:
+        totalProducts:
+          type: integer
+        publishedProducts:
+          type: integer
+        draftProducts:
+          type: integer
+        totalClicks:
+          type: integer
+        totalViews:
+          type: integer
+        totalConversions:
+          type: integer
+        estimatedCommission:
+          type: number
+        topCategories:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryCount"
+        recentProducts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+      required:
+        - totalProducts
+        - publishedProducts
+        - draftProducts
+        - totalClicks
+        - totalViews
+        - totalConversions
+        - estimatedCommission
+        - topCategories
+        - recentProducts
+
+    TopProduct:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        imageUrl:
+          type: string
+        clickCount:
+          type: integer
+        viewCount:
+          type: integer
+        commission:
+          type: integer
+          nullable: true
+        commissionRate:
+          type: number
+          nullable: true
+        price:
+          type: integer
+        status:
+          type: string
+      required: [id, name, slug, imageUrl, clickCount, viewCount, price, status]
+
+    ClickChartPoint:
+      type: object
+      properties:
+        date:
+          type: string
+        clicks:
+          type: integer
+        views:
+          type: integer
+      required: [date, clicks, views]
+
+    CategoryCount:
+      type: object
+      properties:
+        category:
+          type: string
+        count:
+          type: integer
+      required: [category, count]
+
+    AdminLoginBody:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required: [username, password]
+
+    AdminLoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        token:
+          type: string
+        message:
+          type: string
+      required: [success, token, message]
+
+    Setting:
+      type: object
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+        value:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        updatedAt:
+          type: string
+      required: [id, key, updatedAt]
+
+    UpsertSettingBody:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+        description:
+          type: string
+          nullable: true
+      required: [key, value]
