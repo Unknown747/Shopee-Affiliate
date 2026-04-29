@@ -22,6 +22,11 @@ ECOSYSTEM_FILE="${PROJECT_ROOT}/ecosystem.config.cjs"
 
 cd "${PROJECT_ROOT}"
 
+if [ ! -f "${PROJECT_ROOT}/pnpm-workspace.yaml" ]; then
+  echo "✗ Bukan root project (tidak menemukan pnpm-workspace.yaml di ${PROJECT_ROOT})." >&2
+  exit 1
+fi
+
 if [ ! -f "${ENV_FILE}" ]; then
   echo "✗ .env tidak ditemukan di ${ENV_FILE}. Jalankan ./install.sh dulu." >&2
   exit 1

@@ -80,6 +80,17 @@ fi
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="${PROJECT_ROOT}/.env"
 
+# Sanity check — backend ports harus listening, kalau tidak nginx jadi proxy ke
+# port mati (502 Bad Gateway). Cuma warning, lanjut tetap.
+if command -v ss >/dev/null 2>&1; then
+  if ! ss -tln 2>/dev/null | grep -qE ':8080[[:space:]]'; then
+    warn "Port 8080 (api-server) belum listening — site bakal 502. Jalankan ./install.sh dulu."
+  fi
+  if ! ss -tln 2>/dev/null | grep -qE ':25500[[:space:]]'; then
+    warn "Port 25500 (frontend) belum listening — site bakal 502. Jalankan ./install.sh dulu."
+  fi
+fi
+
 # -----------------------------------------------------------------------------
 # 1. Install nginx + certbot
 # -----------------------------------------------------------------------------
@@ -196,9 +207,11 @@ fi
 # -----------------------------------------------------------------------------
 step "5/5 Update PUBLIC_BASE_URL di .env + restart aplikasi"
 
-if [ -f "${ENV_FILE}" ]; then
-  if grep -qE '^PUBLIC_BASE_URL=' "${ENV_FILE}"; then
-    # Pakai delimiter | biar URL dengan / tidak konflik dengan sed
+if $SUDO test -f "${ENV_FILE}"; then
+  # Pakai $SUDO untuk grep juga — .env biasanya chmod 600, kalau dimiliki user
+  # lain maka grep tanpa sudo gagal silent → branch else jalan → APPEND duplikat
+  if $SUDO grep -qE '^PUBLIC_BASE_URL=' "${ENV_FILE}"; then
+    # Delimiter | biar URL dengan / tidak konflik dengan sed
     $SUDO sed -i "s|^PUBLIC_BASE_URL=.*|PUBLIC_BASE_URL=https://${DOMAIN}|" "${ENV_FILE}"
     ok "PUBLIC_BASE_URL di-set ke https://${DOMAIN}"
   else
