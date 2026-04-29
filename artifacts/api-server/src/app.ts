@@ -1,7 +1,10 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import compression from "compression";
 import pinoHttp from "pino-http";
+import path from "node:path";
+import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -34,6 +37,57 @@ app.use(cors());
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
+const seoRewrites: Record<string, string> = {
+  "/sitemap.xml": "/api/sitemap.xml",
+  "/robots.txt": "/api/robots.txt",
+  "/feed.xml": "/api/feed.xml",
+};
+
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  const rewrite = seoRewrites[req.path];
+  if (rewrite) {
+    req.url = rewrite + (req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "");
+  }
+  next();
+});
+
 app.use("/api", router);
+
+if (process.env["NODE_ENV"] === "production") {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const candidates = [
+    path.resolve(here, "../../shopee-affiliate/dist/public"),
+    path.resolve(here, "../shopee-affiliate/dist/public"),
+    path.resolve(process.cwd(), "artifacts/shopee-affiliate/dist/public"),
+  ];
+  const staticDir = candidates.find((p) => fs.existsSync(p));
+
+  if (staticDir) {
+    logger.info({ staticDir }, "Serving static frontend");
+    app.use(
+      express.static(staticDir, {
+        index: false,
+        maxAge: "1h",
+        setHeaders: (res, filePath) => {
+          if (/\.(js|css|woff2?|png|jpe?g|svg|webp|ico)$/i.test(filePath)) {
+            res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+          }
+        },
+      }),
+    );
+
+    const indexFile = path.join(staticDir, "index.html");
+    app.get(/^(?!\/api\/).*/, (_req, res, next) => {
+      fs.readFile(indexFile, "utf8", (err, html) => {
+        if (err) return next(err);
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        res.setHeader("Cache-Control", "no-cache");
+        res.send(html);
+      });
+    });
+  } else {
+    logger.warn({ candidates }, "Static frontend dir not found");
+  }
+}
 
 export default app;
