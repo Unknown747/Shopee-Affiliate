@@ -552,6 +552,10 @@ components:
         publishedAt:
           type: string
           nullable: true
+        oldPrice7d:
+          type: integer
+          nullable: true
+          description: Most recent price snapshot ≥7 days old, only populated when strictly higher than current price (price-drop alert).
       required:
         - id
         - shopeeId

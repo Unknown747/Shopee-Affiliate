@@ -24,10 +24,29 @@ A full-stack Shopee affiliate platform with AI-powered content generation, SEO-o
 - `artifacts/api-server` → Express API at `/api` (port 8080)
 
 ## Price-drop alerts (7-day window)
-- Table `product_price_history` records a snapshot every time a product's price changes (via `recordPriceSnapshot()` in `services/priceHistoryService.ts`, called from both branches of `routes/affiliate.ts`).
-- Helpers `getOldPricesForProducts()` and `attachPriceDrop()` enrich product responses with `oldPrice7d` (most recent snapshot ≥7 days old, only when strictly higher than current price).
-- Applied in `routes/products.ts` (list + detail), `routes/search.ts`, and `routes/seo.ts` (`/stats/trending`).
-- `ProductCard` shows an animated green "Harga Turun!" badge in the top-right corner when `oldPrice7d` is present.
+
+**Schema** (`lib/db/src/schema/shopee.ts` → `productPriceHistoryTable`):
+- Columns: `id` (uuid), `productId`, `price`, `priceBeforeDisc`, `recordedAt` (defaults to now).
+- Indexes: `idx_pph_product_id` and composite `idx_pph_product_recorded` (productId, recordedAt) — used by the `DISTINCT ON` lookup.
+
+**Service** (`artifacts/api-server/src/services/priceHistoryService.ts`):
+- `recordPriceSnapshot(productId, price, priceBeforeDisc?)` — inserts a new row only when price changed since the last snapshot, keeping the table compact.
+- `getOldPricesForProducts(ids[])` — single batched `SELECT DISTINCT ON (product_id)` returning the latest snapshot per product that's ≥`PRICE_DROP_WINDOW_DAYS` (7) days old.
+- `attachPriceDrop(product, oldPriceMap)` — appends `oldPrice7d: number | null`. Value is non-null only when the older snapshot is **strictly higher** than the current price.
+
+**Where snapshots are recorded:**
+- `routes/affiliate.ts` `POST /api/affiliate/generate` — both code paths (existing-product update + new-product insert) call `recordPriceSnapshot()` and then `invalidateProductCaches(slug)` so the badge appears immediately on the next list/search request.
+
+**Where `oldPrice7d` is exposed in responses:**
+- `routes/products.ts` — `GET /api/products` (list) + `GET /api/products/:slug` (detail).
+- `routes/search.ts` — `GET /api/search` (filtered search).
+- `routes/seo.ts` — `GET /api/stats/trending` (trending list).
+
+**OpenAPI / generated types:**
+- `lib/api-spec/openapi.yaml` declares `oldPrice7d` (integer, nullable) on the shared `Product` schema; codegen propagates it to `lib/api-zod` and `lib/api-client-react`. Run `pnpm --filter @workspace/api-spec run codegen` after editing the spec.
+
+**Frontend** (`artifacts/shopee-affiliate/src/components/ProductCard.tsx`):
+- Green animated `Harga Turun NN%!` badge with `TrendingDown` icon, positioned **top-LEFT** of the image (sliding to `top-9` when the discount ribbon is present, `top-2` otherwise) so it never overlaps the top-right compare button.
 
 ## Key Features
 

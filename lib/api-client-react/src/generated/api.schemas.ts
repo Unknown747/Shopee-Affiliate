@@ -55,6 +55,8 @@ export interface Product {
   createdAt: string;
   lastUpdated: string;
   publishedAt?: string | null;
+  /** Most recent price snapshot ≥7 days old, only populated when strictly higher than current price (price-drop alert). */
+  oldPrice7d?: number | null;
 }
 
 export interface ProductListResponse {

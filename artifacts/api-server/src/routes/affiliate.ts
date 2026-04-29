@@ -5,7 +5,18 @@ import { eq } from "drizzle-orm";
 import { GenerateAffiliateLinkBody } from "@workspace/api-zod";
 import { generateAffiliateLink } from "../services/shopeeService.js";
 import { recordPriceSnapshot } from "../services/priceHistoryService.js";
+import { deleteCached, deleteCachedByPattern } from "../services/cacheService.js";
 import slugify from "slugify";
+
+/**
+ * Invalidate every public cache key that may contain a stale view of this
+ * product's price (so the "Harga Turun!" badge appears immediately after a
+ * snapshot is recorded).
+ */
+function invalidateProductCaches(slug?: string | null) {
+  if (slug) deleteCached(`product:${slug}`);
+  deleteCachedByPattern("products:");
+}
 
 const router = Router();
 
@@ -44,6 +55,7 @@ router.post("/affiliate/generate", async (req, res) => {
         .returning();
 
       await recordPriceSnapshot(existing[0].id, productInfo.price, productInfo.priceBeforeDisc);
+      invalidateProductCaches(existing[0].slug);
 
       return res.json({ product: updated[0] || existing[0], isNew: false });
     }
@@ -79,6 +91,7 @@ router.post("/affiliate/generate", async (req, res) => {
       .returning();
 
     await recordPriceSnapshot(product.id, product.price, product.priceBeforeDisc);
+    invalidateProductCaches(product.slug);
 
     return res.json({ product, isNew: true });
   } catch (err) {

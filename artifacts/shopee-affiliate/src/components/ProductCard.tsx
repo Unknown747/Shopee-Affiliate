@@ -132,12 +132,20 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
           </Badge>
         )}
 
-        {/* Price-drop badge (last 7 days) */}
+        {/*
+          Price-drop badge (last 7 days).
+          Positioned on the LEFT side to avoid overlapping the compare button
+          (top-right). When the discount ribbon is visible (top-0 left-0,
+          ~28px tall), we shift the badge down to `top-9` so it sits below it.
+        */}
         {hasPriceDrop && (
-          <div className="absolute top-2 right-2 z-20">
+          <div
+            className={`absolute left-2 z-20 ${discount > 0 ? "top-9" : "top-2"}`}
+            title={`Harga turun ${dropPct}% dibanding 7 hari lalu`}
+          >
             <span className="inline-flex items-center gap-1 bg-emerald-600 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-lg animate-pulse">
               <TrendingDown className="h-3 w-3" />
-              Harga Turun!
+              Harga Turun{dropPct > 0 ? ` ${dropPct}%` : ""}!
             </span>
           </div>
         )}

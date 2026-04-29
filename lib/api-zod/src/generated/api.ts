@@ -67,6 +67,12 @@ export const ListProductsResponse = zod.object({
       createdAt: zod.string(),
       lastUpdated: zod.string(),
       publishedAt: zod.string().nullish(),
+      oldPrice7d: zod
+        .number()
+        .nullish()
+        .describe(
+          "Most recent price snapshot ≥7 days old, only populated when strictly higher than current price (price-drop alert).",
+        ),
     }),
   ),
   total: zod.number(),
@@ -119,6 +125,12 @@ export const GetProductBySlugResponse = zod.object({
   createdAt: zod.string(),
   lastUpdated: zod.string(),
   publishedAt: zod.string().nullish(),
+  oldPrice7d: zod
+    .number()
+    .nullish()
+    .describe(
+      "Most recent price snapshot ≥7 days old, only populated when strictly higher than current price (price-drop alert).",
+    ),
 });
 
 /**
@@ -182,6 +194,12 @@ export const PublishProductResponse = zod.object({
   createdAt: zod.string(),
   lastUpdated: zod.string(),
   publishedAt: zod.string().nullish(),
+  oldPrice7d: zod
+    .number()
+    .nullish()
+    .describe(
+      "Most recent price snapshot ≥7 days old, only populated when strictly higher than current price (price-drop alert).",
+    ),
 });
 
 /**
@@ -247,6 +265,12 @@ export const UpdateProductResponse = zod.object({
   createdAt: zod.string(),
   lastUpdated: zod.string(),
   publishedAt: zod.string().nullish(),
+  oldPrice7d: zod
+    .number()
+    .nullish()
+    .describe(
+      "Most recent price snapshot ≥7 days old, only populated when strictly higher than current price (price-drop alert).",
+    ),
 });
 
 /**
@@ -307,6 +331,12 @@ export const GenerateAffiliateLinkResponse = zod.object({
     createdAt: zod.string(),
     lastUpdated: zod.string(),
     publishedAt: zod.string().nullish(),
+    oldPrice7d: zod
+      .number()
+      .nullish()
+      .describe(
+        "Most recent price snapshot ≥7 days old, only populated when strictly higher than current price (price-drop alert).",
+      ),
   }),
   isNew: zod.boolean(),
 });
@@ -393,6 +423,12 @@ export const GetDashboardStatsResponse = zod.object({
       createdAt: zod.string(),
       lastUpdated: zod.string(),
       publishedAt: zod.string().nullish(),
+      oldPrice7d: zod
+        .number()
+        .nullish()
+        .describe(
+          "Most recent price snapshot ≥7 days old, only populated when strictly higher than current price (price-drop alert).",
+        ),
     }),
   ),
 });
@@ -493,6 +529,12 @@ export const SearchProductsResponse = zod.object({
       createdAt: zod.string(),
       lastUpdated: zod.string(),
       publishedAt: zod.string().nullish(),
+      oldPrice7d: zod
+        .number()
+        .nullish()
+        .describe(
+          "Most recent price snapshot ≥7 days old, only populated when strictly higher than current price (price-drop alert).",
+        ),
     }),
   ),
   total: zod.number(),
@@ -564,6 +606,12 @@ export const AdminListProductsResponse = zod.object({
       createdAt: zod.string(),
       lastUpdated: zod.string(),
       publishedAt: zod.string().nullish(),
+      oldPrice7d: zod
+        .number()
+        .nullish()
+        .describe(
+          "Most recent price snapshot ≥7 days old, only populated when strictly higher than current price (price-drop alert).",
+        ),
     }),
   ),
   total: zod.number(),
