@@ -4,6 +4,7 @@ import { productsTable } from "@workspace/db/schema";
 import { eq, and, gte, lte, desc, asc, sql, ilike, or } from "drizzle-orm";
 import { SearchProductsQueryParams } from "@workspace/api-zod";
 import { httpCache } from "../lib/httpCache.js";
+import { getOldPricesForProducts, attachPriceDrop } from "../services/priceHistoryService.js";
 
 const router = Router();
 
@@ -71,10 +72,11 @@ router.get("/search", httpCache({ maxAge: 30 }), async (req, res) => {
     ]);
 
     const total = Number(totalResult[0]?.count ?? 0);
+    const oldPriceMap = await getOldPricesForProducts(products.map((p) => p.id));
     return res.json({
       products: products.map((p) => {
         const { commission: _c, commissionRate: _r, ...rest } = p;
-        return rest;
+        return attachPriceDrop(rest, oldPriceMap);
       }),
       total,
       page,

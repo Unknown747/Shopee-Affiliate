@@ -1,8 +1,10 @@
 import { Link } from "wouter";
-import { Star, MapPin, Truck, GitCompareArrows } from "lucide-react";
+import { Star, MapPin, Truck, GitCompareArrows, TrendingDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Product } from "@workspace/api-client-react";
 import { formatIdr, formatNumber } from "@/lib/format";
+
+type ProductWithPriceDrop = Product & { oldPrice7d?: number | null };
 import { useTrackProductClick } from "@workspace/api-client-react";
 import { useCompare } from "@/hooks/use-compare";
 import { useToast } from "@/hooks/use-toast";
@@ -10,7 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 
 interface ProductCardProps {
-  product: Product;
+  product: ProductWithPriceDrop;
   /** When true, the image loads eagerly with high priority (use for above-the-fold cards) */
   priority?: boolean;
 }
@@ -88,6 +90,12 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   const rating = product.ratingStar ?? 0;
   const isHot = sold > 1000;
 
+  const oldPrice7d = product.oldPrice7d ?? null;
+  const hasPriceDrop = typeof oldPrice7d === "number" && oldPrice7d > product.price;
+  const dropPct = hasPriceDrop
+    ? Math.round(((oldPrice7d! - product.price) / oldPrice7d!) * 100)
+    : 0;
+
   return (
     <Link
       href={`/product/${product.slug}`}
@@ -118,10 +126,20 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         )}
 
         {/* Hot badge */}
-        {isHot && discount === 0 && (
+        {isHot && discount === 0 && !hasPriceDrop && (
           <Badge className="absolute top-2 left-2 bg-secondary text-secondary-foreground border-0 shadow-md font-bold text-[10px] px-1.5 py-0.5">
             HOT
           </Badge>
+        )}
+
+        {/* Price-drop badge (last 7 days) */}
+        {hasPriceDrop && (
+          <div className="absolute top-2 right-2 z-20">
+            <span className="inline-flex items-center gap-1 bg-emerald-600 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-lg animate-pulse">
+              <TrendingDown className="h-3 w-3" />
+              Harga Turun!
+            </span>
+          </div>
         )}
 
         {/* Compare action */}

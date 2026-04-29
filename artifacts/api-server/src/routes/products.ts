@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { productsTable, clickLogsTable } from "@workspace/db/schema";
 import { eq, desc, asc, and, sql, ne } from "drizzle-orm";
+import { getOldPricesForProducts, attachPriceDrop } from "../services/priceHistoryService.js";
 import {
   GetProductBySlugParams,
   TrackProductClickParams,
@@ -70,8 +71,9 @@ router.get("/products", httpCache({ maxAge: 60 }), async (req, res) => {
     ]);
 
     const total = Number(totalResult[0]?.count ?? 0);
+    const oldPriceMap = await getOldPricesForProducts(products.map((p) => p.id));
     const result = {
-      products: products.map(stripPrivateFields),
+      products: products.map((p) => attachPriceDrop(stripPrivateFields(p), oldPriceMap)),
       total,
       page,
       totalPages: Math.ceil(total / limit),
@@ -111,12 +113,18 @@ router.get("/products/:slug", httpCache({ maxAge: 120 }), async (req, res) => {
 
     const product = products[0];
 
-    await db
-      .update(productsTable)
-      .set({ viewCount: sql`${productsTable.viewCount} + 1` })
-      .where(eq(productsTable.id, product.id));
+    const [_, oldPriceMap] = await Promise.all([
+      db
+        .update(productsTable)
+        .set({ viewCount: sql`${productsTable.viewCount} + 1` })
+        .where(eq(productsTable.id, product.id)),
+      getOldPricesForProducts([product.id]),
+    ]);
 
-    const updatedProduct = stripPrivateFields({ ...product, viewCount: product.viewCount + 1 });
+    const updatedProduct = attachPriceDrop(
+      stripPrivateFields({ ...product, viewCount: product.viewCount + 1 }),
+      oldPriceMap,
+    );
     setCached(cacheKey, updatedProduct, 1800);
     return res.json(updatedProduct);
   } catch (err) {

@@ -4,6 +4,7 @@ import { productsTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { GenerateAffiliateLinkBody } from "@workspace/api-zod";
 import { generateAffiliateLink } from "../services/shopeeService.js";
+import { recordPriceSnapshot } from "../services/priceHistoryService.js";
 import slugify from "slugify";
 
 const router = Router();
@@ -42,6 +43,8 @@ router.post("/affiliate/generate", async (req, res) => {
         .where(eq(productsTable.id, existing[0].id))
         .returning();
 
+      await recordPriceSnapshot(existing[0].id, productInfo.price, productInfo.priceBeforeDisc);
+
       return res.json({ product: updated[0] || existing[0], isNew: false });
     }
 
@@ -74,6 +77,8 @@ router.post("/affiliate/generate", async (req, res) => {
         status: "draft",
       })
       .returning();
+
+    await recordPriceSnapshot(product.id, product.price, product.priceBeforeDisc);
 
     return res.json({ product, isNew: true });
   } catch (err) {

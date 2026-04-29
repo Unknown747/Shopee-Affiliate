@@ -68,6 +68,21 @@ export const clickLogsTable = pgTable(
   (table) => [index("idx_click_logs_product_id").on(table.productId), index("idx_click_logs_clicked_at").on(table.clickedAt)],
 );
 
+export const productPriceHistoryTable = pgTable(
+  "product_price_history",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    productId: text("product_id").notNull(),
+    price: integer("price").notNull(),
+    priceBeforeDisc: integer("price_before_disc"),
+    recordedAt: timestamp("recorded_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_pph_product_id").on(table.productId),
+    index("idx_pph_product_recorded").on(table.productId, table.recordedAt),
+  ],
+);
+
 export const settingsTable = pgTable("settings", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   key: text("key").notNull().unique(),

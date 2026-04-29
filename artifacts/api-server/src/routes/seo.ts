@@ -3,6 +3,7 @@ import { db } from "@workspace/db";
 import { productsTable } from "@workspace/db/schema";
 import { eq, and, ne, desc, sql } from "drizzle-orm";
 import { httpCache } from "../lib/httpCache.js";
+import { getOldPricesForProducts, attachPriceDrop } from "../services/priceHistoryService.js";
 
 const router = Router();
 
@@ -168,9 +169,10 @@ router.get("/stats/trending", httpCache({ maxAge: 120 }), async (req, res) => {
       )
       .limit(8);
 
+    const oldPriceMap = await getOldPricesForProducts(products.map((p) => p.id));
     const trending = products.map((p) => {
       const { commission: _c, commissionRate: _r, ...rest } = p;
-      return rest;
+      return attachPriceDrop(rest, oldPriceMap);
     });
     return res.json({ products: trending });
   } catch (err) {

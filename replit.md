@@ -23,6 +23,12 @@ A full-stack Shopee affiliate platform with AI-powered content generation, SEO-o
 - `artifacts/shopee-affiliate` → React+Vite frontend at `/` (port from $PORT env)
 - `artifacts/api-server` → Express API at `/api` (port 8080)
 
+## Price-drop alerts (7-day window)
+- Table `product_price_history` records a snapshot every time a product's price changes (via `recordPriceSnapshot()` in `services/priceHistoryService.ts`, called from both branches of `routes/affiliate.ts`).
+- Helpers `getOldPricesForProducts()` and `attachPriceDrop()` enrich product responses with `oldPrice7d` (most recent snapshot ≥7 days old, only when strictly higher than current price).
+- Applied in `routes/products.ts` (list + detail), `routes/search.ts`, and `routes/seo.ts` (`/stats/trending`).
+- `ProductCard` shows an animated green "Harga Turun!" badge in the top-right corner when `oldPrice7d` is present.
+
 ## Key Features
 
 - Affiliate link generation via Shopee API + SHA256 (with mock fallback)
