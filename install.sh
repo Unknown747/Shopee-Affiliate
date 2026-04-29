@@ -4,11 +4,13 @@
 # =============================================================================
 # Otomatis menjalankan langkah persiapan VPS:
 #   1. Update sistem & install paket dasar
-#   2. Install Node.js 24 + pnpm (via corepack)
-#   3. Install PostgreSQL 16 + buat database & user
+#   2. Install Node.js (default v24) + pnpm (via corepack)
+#   3. Install PostgreSQL (versi default distro) + buat database & user
 #   4. Install PM2 (process manager)
-#   5. Buat template .env (auto-generate SESSION_SECRET & password)
-#   6. pnpm install + push schema database
+#   5. Buat template .env (auto-generate SESSION_SECRET & password admin)
+#   6. pnpm install --frozen-lockfile + push schema database (drizzle)
+#   7. Build production (api-server + shopee-affiliate)
+#   8. Start aplikasi via PM2 (zero-downtime reload kalau sudah register)
 #
 # Aman dijalankan ulang (idempotent) — langkah yang sudah selesai akan dilewati.
 #
