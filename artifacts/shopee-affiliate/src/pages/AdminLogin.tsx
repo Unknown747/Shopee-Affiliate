@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ShoppingBag, Lock } from "lucide-react";
+import { useSiteConfig, resolveBrand } from "@/lib/site-config";
 
 export default function AdminLogin() {
   const [username, setUsername] = useState("");
@@ -16,6 +17,8 @@ export default function AdminLogin() {
   const [, setLocation] = useLocation();
   const { login, isAuthenticated } = useAdmin();
   const loginMutation = useAdminLogin();
+  const { data: cfg } = useSiteConfig();
+  const brand = resolveBrand(cfg).name;
 
   if (isAuthenticated) {
     setLocation("/admin/dashboard");
@@ -50,7 +53,7 @@ export default function AdminLogin() {
           <div className="bg-primary/10 rounded-full p-4 mb-4">
             <ShoppingBag className="h-10 w-10 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold">ShopeeRecommend</h1>
+          <h1 className="text-2xl font-bold">{brand}</h1>
           <p className="text-muted-foreground text-sm mt-1">Panel Admin</p>
         </div>
 

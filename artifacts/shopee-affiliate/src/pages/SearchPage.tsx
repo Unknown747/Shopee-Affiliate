@@ -50,7 +50,7 @@ export default function SearchPage() {
       ? `Produk kategori ${catParam}`
       : "Semua Produk Pilihan";
   const seoDesc = qParam
-    ? `Temukan produk Shopee terbaik untuk "${qParam}" dengan harga & rating terbaik. Update tiap hari di ShopeeRecommend.`
+    ? `Temukan produk Shopee terbaik untuk "${qParam}" dengan harga & rating terbaik. Update tiap hari.`
     : "Jelajahi seluruh katalog produk Shopee pilihan kami: harga terbaik, rating tinggi, dan banyak pilihan gratis ongkir.";
 
   return (

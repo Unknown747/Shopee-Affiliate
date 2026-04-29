@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useCompare } from "@/hooks/use-compare";
 import { formatIdr, formatNumber } from "@/lib/format";
+import { useSiteConfig, resolveBrand } from "@/lib/site-config";
 import type { Product } from "@workspace/api-client-react";
 
 const API_BASE = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
@@ -15,9 +16,11 @@ export default function ComparePage() {
   const { ids, count, max, remove, clear } = useCompare();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
+  const { data: cfg } = useSiteConfig();
+  const brand = resolveBrand(cfg).name;
 
   useEffect(() => {
-    document.title = "Bandingkan Produk - ShopeeRecommend";
+    document.title = `Bandingkan Produk - ${brand}`;
     let robots = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
     if (!robots) {
       robots = document.createElement("meta");
@@ -25,7 +28,7 @@ export default function ComparePage() {
       document.head.appendChild(robots);
     }
     robots.content = "noindex, nofollow";
-  }, []);
+  }, [brand]);
 
   useEffect(() => {
     if (ids.length === 0) {

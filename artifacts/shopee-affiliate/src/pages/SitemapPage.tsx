@@ -3,10 +3,13 @@ import { Layout } from "@/components/layout/Layout";
 import { useListProducts, useListCategories } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ExternalLink, FileText } from "lucide-react";
+import { useSiteConfig, resolveBrand } from "@/lib/site-config";
 
 export default function SitemapPage() {
   const { data: productsData, isLoading } = useListProducts({ limit: 100 });
   const { data: categories } = useListCategories();
+  const { data: cfg } = useSiteConfig();
+  const brand = resolveBrand(cfg).name;
 
   const staticPages = [
     { href: "/", title: "Beranda" },
@@ -23,7 +26,7 @@ export default function SitemapPage() {
             <FileText className="h-8 w-8 text-primary" />
             Sitemap
           </h1>
-          <p className="text-muted-foreground mt-2">Daftar lengkap semua halaman di ShopeeRecommend</p>
+          <p className="text-muted-foreground mt-2">Daftar lengkap semua halaman di {brand}</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-10">

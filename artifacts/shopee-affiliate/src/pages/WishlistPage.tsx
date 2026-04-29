@@ -6,6 +6,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWishlist } from "@/hooks/use-wishlist";
+import { useSiteConfig, resolveBrand } from "@/lib/site-config";
 import type { Product } from "@workspace/api-client-react";
 
 const API_BASE = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
@@ -14,9 +15,11 @@ export default function WishlistPage() {
   const { ids, count, clear } = useWishlist();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
+  const { data: cfg } = useSiteConfig();
+  const brand = resolveBrand(cfg).name;
 
   useEffect(() => {
-    document.title = "Wishlist Saya - ShopeeRecommend";
+    document.title = `Wishlist Saya - ${brand}`;
     let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
     if (!meta) {
       meta = document.createElement("meta");
@@ -32,7 +35,7 @@ export default function WishlistPage() {
       document.head.appendChild(robots);
     }
     robots.content = "noindex, nofollow";
-  }, []);
+  }, [brand]);
 
   useEffect(() => {
     if (ids.length === 0) {

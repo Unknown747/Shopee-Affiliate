@@ -2,15 +2,19 @@ import { Layout } from "@/components/layout/Layout";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingBag, Shield, Star, Info } from "lucide-react";
+import { useSiteConfig, resolveBrand } from "@/lib/site-config";
 
 export default function AboutPage() {
+  const { data: cfg } = useSiteConfig();
+  const brand = resolveBrand(cfg).name;
+
   return (
     <Layout>
       <div className="container mx-auto px-4 py-12 max-w-3xl">
         <div className="flex items-center gap-3 mb-2">
           <Badge variant="outline">Tentang Kami</Badge>
         </div>
-        <h1 className="text-4xl font-bold mb-4">ShopeeRecommend</h1>
+        <h1 className="text-4xl font-bold mb-4">{brand}</h1>
         <p className="text-xl text-muted-foreground mb-10">
           Platform rekomendasi produk Shopee yang jujur, objektif, dan membantu Anda berbelanja lebih cerdas.
         </p>
@@ -24,7 +28,7 @@ export default function AboutPage() {
               <h2 className="text-2xl font-bold">Tentang Platform Ini</h2>
             </div>
             <p className="text-muted-foreground leading-relaxed">
-              ShopeeRecommend adalah platform yang menyajikan review produk-produk terbaik dari Shopee Indonesia.
+              {brand} adalah platform yang menyajikan review produk-produk terbaik dari Shopee Indonesia.
               Kami mengkurasi, menganalisis, dan membuat konten review yang jujur untuk membantu Anda membuat
               keputusan pembelian yang lebih baik.
             </p>
@@ -45,7 +49,7 @@ export default function AboutPage() {
             </div>
             <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-900 rounded-xl p-6">
               <p className="text-sm leading-relaxed">
-                <strong>Penting untuk diketahui:</strong> ShopeeRecommend adalah peserta program afiliasi Shopee.
+                <strong>Penting untuk diketahui:</strong> {brand} adalah peserta program afiliasi Shopee.
                 Ini berarti kami mendapatkan komisi dari setiap pembelian yang dilakukan melalui tautan afiliasi
                 di situs ini, <strong>tanpa biaya tambahan bagi Anda</strong>.
               </p>
@@ -125,7 +129,7 @@ export default function AboutPage() {
                 menggantikan pengalaman langsung pengguna yang sudah membeli produk tersebut.
               </p>
               <p>
-                ShopeeRecommend bukanlah toko resmi Shopee dan tidak berafiliasi langsung dengan Shopee
+                {brand} bukanlah toko resmi Shopee dan tidak berafiliasi langsung dengan Shopee
                 selain sebagai mitra afiliasi.
               </p>
             </div>
