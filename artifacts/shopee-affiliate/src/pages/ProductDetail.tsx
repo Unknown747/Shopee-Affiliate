@@ -29,13 +29,12 @@ import {
   Copy,
   Check,
   Store,
-  Heart,
   Info,
   GitCompare,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useWishlist } from "@/hooks/use-wishlist";
 import { useCompare } from "@/hooks/use-compare";
+import { useRecentlyViewed } from "@/hooks/use-recently-viewed";
 import { useEffect, useMemo, useState } from "react";
 
 type RelatedProduct = {
@@ -86,8 +85,8 @@ function removeJsonLd(id: string) {
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
   const { toast } = useToast();
-  const { isInWishlist, toggle: toggleWishlist } = useWishlist();
   const { isInCompare, toggle: toggleCompare, count: compareCount, max: compareMax } = useCompare();
+  const { track: trackRecentlyViewed } = useRecentlyViewed();
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
 
@@ -123,6 +122,11 @@ export default function ProductDetail() {
   }, [product]);
 
   const heroImage = activeImage || product?.imageUrl || "";
+
+  // Track recently viewed (excluded from SEO; runs on each new product)
+  useEffect(() => {
+    if (product?.id) trackRecentlyViewed(product.id);
+  }, [product?.id, trackRecentlyViewed]);
 
   // SEO: JSON-LD structured data (title/desc/og handled by <SeoHead/>)
   useEffect(() => {
@@ -492,24 +496,6 @@ export default function ProductDetail() {
                 )}
               </Button>
               <Button
-                variant={isInWishlist(product.id) ? "default" : "outline"}
-                size="sm"
-                className="gap-1.5"
-                onClick={() => {
-                  toggleWishlist(product.id);
-                  toast({
-                    title: isInWishlist(product.id)
-                      ? "Dihapus dari Wishlist"
-                      : "Ditambahkan ke Wishlist",
-                  });
-                }}
-              >
-                <Heart
-                  className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-current" : ""}`}
-                />
-                Wishlist
-              </Button>
-              <Button
                 variant={isInCompare(product.id) ? "default" : "outline"}
                 size="sm"
                 className="gap-1.5"
@@ -876,24 +862,6 @@ export default function ProductDetail() {
             {formatIdr(product.price)}
           </div>
         </div>
-        <Button
-          size="icon"
-          variant="outline"
-          className="flex-none"
-          onClick={() => {
-            toggleWishlist(product.id);
-            toast({
-              title: isInWishlist(product.id)
-                ? "Dihapus dari Wishlist"
-                : "Ditambahkan ke Wishlist",
-            });
-          }}
-          aria-label="Tambah ke wishlist"
-        >
-          <Heart
-            className={`h-5 w-5 ${isInWishlist(product.id) ? "fill-primary text-primary" : ""}`}
-          />
-        </Button>
         <Button
           size="lg"
           className="flex-1 gap-2 font-semibold"

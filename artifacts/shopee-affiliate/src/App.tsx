@@ -17,7 +17,6 @@ const AdminProducts = lazy(() => import("@/pages/AdminProducts"));
 const AdminSettings = lazy(() => import("@/pages/AdminSettings"));
 const AboutPage = lazy(() => import("@/pages/AboutPage"));
 const SitemapPage = lazy(() => import("@/pages/SitemapPage"));
-const WishlistPage = lazy(() => import("@/pages/WishlistPage"));
 const ComparePage = lazy(() => import("@/pages/ComparePage"));
 const TrendingPage = lazy(() => import("@/pages/TrendingPage"));
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -66,7 +65,6 @@ function Router() {
       </Route>
       <Route path="/about" component={AboutPage} />
       <Route path="/sitemap" component={SitemapPage} />
-      <Route path="/wishlist" component={WishlistPage} />
       <Route path="/compare" component={ComparePage} />
       <Route path="/trending" component={TrendingPage} />
       <Route component={NotFound} />

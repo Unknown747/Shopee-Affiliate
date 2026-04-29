@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 
-const STORAGE_KEY = "shopee_wishlist_v1";
+const STORAGE_KEY = "shopee_recently_viewed_v1";
+const MAX_ITEMS = 12;
 
 function readStorage(): string[] {
   if (typeof window === "undefined") return [];
@@ -17,36 +18,29 @@ function readStorage(): string[] {
 function writeStorage(ids: string[]) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
-    window.dispatchEvent(new CustomEvent("wishlist:change"));
+    window.dispatchEvent(new CustomEvent("recently-viewed:change"));
   } catch {
     // ignore quota errors
   }
 }
 
-export function useWishlist() {
+export function useRecentlyViewed() {
   const [ids, setIds] = useState<string[]>(() => readStorage());
 
   useEffect(() => {
     const handler = () => setIds(readStorage());
-    window.addEventListener("wishlist:change", handler);
+    window.addEventListener("recently-viewed:change", handler);
     window.addEventListener("storage", handler);
     return () => {
-      window.removeEventListener("wishlist:change", handler);
+      window.removeEventListener("recently-viewed:change", handler);
       window.removeEventListener("storage", handler);
     };
   }, []);
 
-  const isInWishlist = useCallback((id: string) => ids.includes(id), [ids]);
-
-  const toggle = useCallback((id: string) => {
+  const track = useCallback((id: string) => {
+    if (!id) return;
     const current = readStorage();
-    const next = current.includes(id) ? current.filter((x) => x !== id) : [...current, id];
-    writeStorage(next);
-    setIds(next);
-  }, []);
-
-  const remove = useCallback((id: string) => {
-    const next = readStorage().filter((x) => x !== id);
+    const next = [id, ...current.filter((x) => x !== id)].slice(0, MAX_ITEMS);
     writeStorage(next);
     setIds(next);
   }, []);
@@ -56,5 +50,5 @@ export function useWishlist() {
     setIds([]);
   }, []);
 
-  return { ids, count: ids.length, isInWishlist, toggle, remove, clear };
+  return { ids, count: ids.length, max: MAX_ITEMS, track, clear };
 }

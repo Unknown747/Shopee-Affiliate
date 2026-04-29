@@ -6,7 +6,6 @@ import {
   Sun,
   ShoppingBag,
   Settings,
-  Heart,
   GitCompare,
   X,
   ShieldCheck,
@@ -17,7 +16,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { useAdmin } from "@/hooks/use-admin";
-import { useWishlist } from "@/hooks/use-wishlist";
 import { useCompare } from "@/hooks/use-compare";
 import { formatIdr } from "@/lib/format";
 import { useSiteConfig, resolveBrand } from "@/lib/site-config";
@@ -290,7 +288,6 @@ export function Layout({ children }: { children: ReactNode }) {
   const { isAuthenticated, logout } = useAdmin();
   const [location] = useLocation();
   const isAdmin = location.startsWith("/admin") && location !== "/admin";
-  const { count: wishlistCount } = useWishlist();
   const { count: compareCount } = useCompare();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { data: siteConfig } = useSiteConfig();
@@ -407,25 +404,6 @@ export function Layout({ children }: { children: ReactNode }) {
                 {compareCount > 0 && (
                   <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold flex items-center justify-center">
                     {compareCount}
-                  </span>
-                )}
-              </Link>
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              asChild
-              className="relative"
-              aria-label="Wishlist"
-            >
-              <Link href="/wishlist">
-                <Heart
-                  className={`h-5 w-5 ${wishlistCount > 0 ? "fill-primary text-primary" : ""}`}
-                />
-                {wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold flex items-center justify-center">
-                    {wishlistCount}
                   </span>
                 )}
               </Link>
@@ -634,14 +612,6 @@ export function Layout({ children }: { children: ReactNode }) {
                 Personal
               </h3>
               <ul className="space-y-2.5 text-sm text-muted-foreground">
-                <li>
-                  <Link
-                    href="/wishlist"
-                    className="hover:text-primary transition-colors"
-                  >
-                    Wishlist Saya
-                  </Link>
-                </li>
                 <li>
                   <Link
                     href="/compare"

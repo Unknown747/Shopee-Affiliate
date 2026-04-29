@@ -1,10 +1,9 @@
 import { Link } from "wouter";
-import { Star, Heart, MapPin, Truck, GitCompareArrows } from "lucide-react";
+import { Star, MapPin, Truck, GitCompareArrows } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Product } from "@workspace/api-client-react";
 import { formatIdr, formatNumber } from "@/lib/format";
 import { useTrackProductClick } from "@workspace/api-client-react";
-import { useWishlist } from "@/hooks/use-wishlist";
 import { useCompare } from "@/hooks/use-compare";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -20,10 +19,8 @@ const prefetched = new Set<string>();
 
 export function ProductCard({ product, priority = false }: ProductCardProps) {
   const trackClick = useTrackProductClick();
-  const { isInWishlist, toggle: toggleWishlist } = useWishlist();
   const { isInCompare, toggle: toggleCompare, count: compareCount, max: compareMax } = useCompare();
   const { toast } = useToast();
-  const inWishlist = isInWishlist(product.id);
   const inCompare = isInCompare(product.id);
   const queryClient = useQueryClient();
   const prefetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -58,12 +55,6 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
       id: product.id,
       data: { referer: window.location.href },
     });
-  };
-
-  const handleWishlist = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleWishlist(product.id);
   };
 
   const handleCompare = (e: React.MouseEvent) => {
@@ -133,38 +124,21 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
           </Badge>
         )}
 
-        {/* Wishlist + Compare actions */}
-        <div className="absolute top-2 right-2 flex flex-col gap-1.5">
-          <button
-            type="button"
-            onClick={handleWishlist}
-            aria-label={inWishlist ? "Hapus dari wishlist" : "Simpan ke wishlist"}
-            title={inWishlist ? "Hapus dari wishlist" : "Simpan ke wishlist"}
-            className={`h-8 w-8 rounded-full bg-background/90 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-all shadow-sm ${
-              inWishlist
-                ? "text-primary opacity-100"
-                : "text-foreground/70 hover:text-primary opacity-0 group-hover:opacity-100 focus:opacity-100"
-            }`}
-          >
-            <Heart
-              className={`h-4 w-4 ${inWishlist ? "fill-primary text-primary" : ""}`}
-            />
-          </button>
-          <button
-            type="button"
-            onClick={handleCompare}
-            aria-label={inCompare ? "Hapus dari perbandingan" : "Bandingkan produk ini"}
-            title={inCompare ? "Hapus dari perbandingan" : "Bandingkan produk ini"}
-            aria-pressed={inCompare}
-            className={`h-8 w-8 rounded-full bg-background/90 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-all shadow-sm ${
-              inCompare
-                ? "text-primary opacity-100"
-                : "text-foreground/70 hover:text-primary opacity-0 group-hover:opacity-100 focus:opacity-100"
-            }`}
-          >
-            <GitCompareArrows className="h-4 w-4" />
-          </button>
-        </div>
+        {/* Compare action */}
+        <button
+          type="button"
+          onClick={handleCompare}
+          aria-label={inCompare ? "Hapus dari perbandingan" : "Bandingkan produk ini"}
+          title={inCompare ? "Hapus dari perbandingan" : "Bandingkan produk ini"}
+          aria-pressed={inCompare}
+          className={`absolute top-2 right-2 h-8 w-8 rounded-full bg-background/90 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-all shadow-sm ${
+            inCompare
+              ? "text-primary opacity-100"
+              : "text-foreground/70 hover:text-primary opacity-0 group-hover:opacity-100 focus:opacity-100"
+          }`}
+        >
+          <GitCompareArrows className="h-4 w-4" />
+        </button>
 
         {/* Hover quick action */}
         <div className="absolute bottom-0 left-0 right-0 px-3 py-2 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">

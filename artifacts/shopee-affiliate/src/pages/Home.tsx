@@ -27,6 +27,8 @@ import {
 import type { Product } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { useRecentlyViewed } from "@/hooks/use-recently-viewed";
+import { Clock, X } from "lucide-react";
 
 const API_BASE = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
 
@@ -239,6 +241,89 @@ function FeaturedPickCard({
         </Link>
       </Button>
     </div>
+  );
+}
+
+function RecentlyViewedSection() {
+  const { ids, count, clear } = useRecentlyViewed();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (ids.length === 0) {
+      setProducts([]);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    fetch(`${API_BASE}/api/products?limit=200`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        const all = (data.products as Product[]) ?? [];
+        // Preserve recency order from `ids`
+        const indexed = new Map(all.map((p) => [p.id, p]));
+        const ordered = ids
+          .map((id) => indexed.get(id))
+          .filter((p): p is Product => Boolean(p));
+        setProducts(ordered);
+      })
+      .catch(() => setProducts([]))
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ids]);
+
+  if (count === 0) return null;
+  if (!loading && products.length === 0) return null;
+
+  return (
+    <section className="py-10 md:py-14 bg-muted/30">
+      <div className="container mx-auto px-4">
+        <div className="flex items-end justify-between mb-5 flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+              <Clock className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-xl md:text-2xl font-extrabold tracking-tight">
+                Baru Dilihat
+              </h2>
+              <p className="text-xs md:text-sm text-muted-foreground">
+                Lanjutkan dari produk yang baru saja Anda buka
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clear}
+            className="text-muted-foreground hover:text-foreground gap-1.5"
+            aria-label="Hapus riwayat baru dilihat"
+          >
+            <X className="h-3.5 w-3.5" />
+            Bersihkan
+          </Button>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+            {products.slice(0, 6).map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -474,6 +559,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* RECENTLY VIEWED ================================================== */}
+      <RecentlyViewedSection />
 
       {/* RECOMMENDED ===================================================== */}
       <section className="py-12 md:py-16">
