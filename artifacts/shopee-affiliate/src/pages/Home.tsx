@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   Flame,
@@ -20,9 +20,6 @@ import {
 import { Layout } from "@/components/layout/Layout";
 import { SeoHead } from "@/components/SeoHead";
 import { ProductCard } from "@/components/ProductCard";
-const LinkGenerator = lazy(() =>
-  import("@/components/LinkGenerator").then((m) => ({ default: m.LinkGenerator })),
-);
 import {
   useListProducts,
   useListCategories,
@@ -109,6 +106,139 @@ function TrustStrip() {
         </div>
       </div>
     </section>
+  );
+}
+
+function formatRupiah(n: number) {
+  try {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      maximumFractionDigits: 0,
+    }).format(n);
+  } catch {
+    return `Rp${n}`;
+  }
+}
+
+function FeaturedPickCard({
+  product,
+  isLoading,
+}: {
+  product: Product | undefined;
+  isLoading: boolean;
+}) {
+  if (isLoading) {
+    return (
+      <div className="relative bg-card border border-border rounded-2xl shadow-xl p-6 md:p-8">
+        <Skeleton className="h-6 w-40 mb-3" />
+        <Skeleton className="aspect-[4/3] w-full rounded-lg mb-4" />
+        <Skeleton className="h-5 w-3/4 mb-2" />
+        <Skeleton className="h-4 w-1/2 mb-4" />
+        <Skeleton className="h-10 w-full rounded-md" />
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="relative bg-card border border-border rounded-2xl shadow-xl p-6 md:p-8 text-center">
+        <div className="absolute -top-3 left-6 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-bold shadow-md">
+          <Flame className="h-3 w-3" />
+          PILIHAN HARI INI
+        </div>
+        <Package className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+        <h3 className="font-semibold mb-1">Belum ada produk pilihan</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Produk trending akan muncul di sini setelah ada yang dipublikasikan.
+        </p>
+        <Button asChild variant="outline" className="w-full">
+          <Link href="/search">Telusuri Semua Produk</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const hasDiscount =
+    product.priceBeforeDisc && product.priceBeforeDisc > product.price;
+  const discount = hasDiscount
+    ? Math.round(
+        ((product.priceBeforeDisc! - product.price) /
+          product.priceBeforeDisc!) *
+          100,
+      )
+    : 0;
+
+  return (
+    <div className="relative bg-card border border-border rounded-2xl shadow-xl p-6 md:p-8">
+      <div className="absolute -top-3 left-6 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-bold shadow-md">
+        <Flame className="h-3 w-3" />
+        PILIHAN HARI INI
+      </div>
+
+      <Link
+        href={`/product/${product.slug}`}
+        className="block group"
+        aria-label={`Lihat review ${product.name}`}
+      >
+        <div className="aspect-[4/3] w-full rounded-lg overflow-hidden bg-muted mb-4">
+          {product.imageUrl ? (
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              loading="eager"
+              decoding="async"
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+              <Package className="h-12 w-12" />
+            </div>
+          )}
+        </div>
+
+        <h3 className="font-semibold text-base md:text-lg leading-snug line-clamp-2 group-hover:text-primary transition-colors mb-2">
+          {product.name}
+        </h3>
+
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+          {typeof product.ratingStar === "number" && product.ratingStar > 0 && (
+            <span className="inline-flex items-center gap-1 text-foreground font-medium">
+              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              {product.ratingStar.toFixed(1)}
+            </span>
+          )}
+          {typeof product.soldCount === "number" && product.soldCount > 0 && (
+            <>
+              <span>·</span>
+              <span>{product.soldCount.toLocaleString("id-ID")} terjual</span>
+            </>
+          )}
+        </div>
+
+        <div className="flex items-baseline gap-2 mb-4">
+          <span className="text-2xl font-extrabold text-primary">
+            {formatRupiah(product.price)}
+          </span>
+          {hasDiscount && (
+            <>
+              <span className="text-sm text-muted-foreground line-through">
+                {formatRupiah(product.priceBeforeDisc!)}
+              </span>
+              <span className="text-xs font-bold text-secondary-foreground bg-secondary px-1.5 py-0.5 rounded">
+                -{discount}%
+              </span>
+            </>
+          )}
+        </div>
+      </Link>
+
+      <Button asChild className="w-full font-semibold" size="lg">
+        <Link href={`/product/${product.slug}`}>
+          Baca Review Lengkap <ArrowRight className="ml-2 h-4 w-4" />
+        </Link>
+      </Button>
+    </div>
   );
 }
 
@@ -206,24 +336,12 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right: link generator card */}
+            {/* Right: top pick / featured product card */}
             <div className="relative">
-              <div className="relative bg-card border border-border rounded-2xl shadow-xl p-6 md:p-8">
-                <div className="absolute -top-3 left-6 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-bold shadow-md">
-                  <Sparkles className="h-3 w-3" />
-                  GRATIS
-                </div>
-                <h2 className="text-xl font-bold mb-2">
-                  Generate Link Afiliasi Instan
-                </h2>
-                <p className="text-sm text-muted-foreground mb-5">
-                  Tempel link Shopee apa saja, dapatkan link afiliasi & komisi
-                  dalam 1 klik.
-                </p>
-                <Suspense fallback={<Skeleton className="h-[180px] rounded-lg" />}>
-                  <LinkGenerator />
-                </Suspense>
-              </div>
+              <FeaturedPickCard
+                product={trending[0]}
+                isLoading={loadingTrending}
+              />
             </div>
           </div>
         </div>
