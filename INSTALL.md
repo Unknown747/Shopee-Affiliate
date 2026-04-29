@@ -118,7 +118,27 @@ DB_NAME=mydb DB_USER=myuser ./install.sh
 
 ## B. Setelah Install — Nginx + SSL
 
-Selesai `install.sh`, app sudah jalan di **port internal 8080 & 25500**. Untuk akses publik via domain + HTTPS, lanjut ke:
+Selesai `install.sh`, app sudah jalan di **port internal 8080 & 25500**. Untuk akses publik via domain + HTTPS, ada **dua jalur**:
+
+### 🚀 Jalur cepat (1-liner) — recommended
+
+Pastikan dulu DNS A record domain Anda sudah point ke IP VPS, lalu:
+
+```bash
+./scripts/setup-nginx.sh domain-anda.com email@anda.com
+```
+
+Script otomatis: install nginx + certbot → buat site config → reload nginx → pasang SSL Let's Encrypt (auto-redirect HTTP→HTTPS) → update `PUBLIC_BASE_URL` di `.env` → `pm2 restart all`.
+
+Pakai `--no-www` di akhir kalau pakai subdomain (mis. `app.domain.com`):
+
+```bash
+./scripts/setup-nginx.sh app.domain-anda.com email@anda.com --no-www
+```
+
+Lalu lanjut ke **Bagian 12** (Firewall) — bagian 10 & 11 sudah dihandle script.
+
+### 🔧 Jalur manual (step-by-step)
 
 - **Bagian 10** — [Setup Nginx](#10-setup-nginx-sebagai-reverse-proxy)
 - **Bagian 11** — [Pasang SSL dengan Let's Encrypt](#11-pasang-ssl-dengan-lets-encrypt)

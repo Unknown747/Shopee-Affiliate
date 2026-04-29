@@ -117,10 +117,17 @@ A full-stack Shopee affiliate platform with AI-powered content generation, SEO-o
 | File | Runs on | Trigger | Purpose |
 |---|---|---|---|
 | `install.sh` | VPS (Ubuntu/Debian) | Manual once: `./install.sh` | One-click fresh install — apt deps, Node 24, PostgreSQL, PM2, auto-generate `.env` (SESSION_SECRET + admin password), `pnpm install --frozen-lockfile`, drizzle push, build, `pm2 start`, **auto-setup `pm2 startup systemd`** for reboot persistence. Idempotent, supports env-var overrides (`INSTALL_PG`, `AUTO_BUILD`, `AUTO_START`, `DB_NAME`, `DB_USER`, `NODE_MAJOR`, `RUN_DB_PUSH`, `INSTALL_PM2`). Password admin **never printed to stdout** — read from `.env` via `sudo grep ADMIN_PASSWORD .env`. |
+| `scripts/setup-nginx.sh` | VPS | Manual once after DNS pointed: `./scripts/setup-nginx.sh <domain> <email> [--no-www]` | One-liner Nginx + Let's Encrypt SSL. Installs nginx + certbot, generates site config (reverse proxy `/api → :8080`, `/ → :25500`, SEO endpoints proxied), validates & reloads nginx, runs `certbot --nginx --non-interactive --agree-tos --redirect`, then updates `PUBLIC_BASE_URL` di `.env` jadi `https://<domain>` + `pm2 restart all`. Auto-detects subdomain (skip www variant). Pakai `--no-www` untuk skip www variant secara eksplisit. Idempotent — re-run aman. Prasyarat: DNS A record sudah point ke IP VPS, port 80/443 terbuka. |
 | `scripts/deploy.sh` | VPS | Manual after `git pull`: `./scripts/deploy.sh` | Lightweight update flow — checks `.env` exists, runs `pnpm install --frozen-lockfile` → drizzle push → `pnpm run build` → `pm2 reload --update-env` (zero-downtime). Falls back to `pm2 start` if apps not registered. Skips apt/Postgres/PM2 install (use `install.sh` for that). Optionally symlink to `.git/hooks/post-merge` for auto-deploy on every pull. |
 | `scripts/post-merge.sh` | **Replit** (not VPS) | Auto via `.replit [postMerge]` after task-agent merge | Reconciles Replit env after merged work — `pnpm install --frozen-lockfile` + `pnpm --filter @workspace/db run push`. **Do not** add `pm2`/build calls here — PM2 doesn't exist in Replit and would crash the merge reconciliation. |
 
-> The two VPS scripts use `set -euo pipefail` (fail-fast) and are idempotent. Bash syntax validated with `bash -n`.
+> All VPS scripts use `set -euo pipefail` (fail-fast) and are idempotent. Bash syntax validated with `bash -n`.
+
+### Recommended VPS workflow (urutan eksekusi)
+
+1. **First-time install** (fresh VPS): `./install.sh` — app jalan di port internal 8080 + 25500
+2. **Pasang domain + HTTPS**: `./scripts/setup-nginx.sh domain-anda.com email@anda.com` — site live di `https://domain-anda.com`
+3. **Update kode setelah `git pull`**: `./scripts/deploy.sh` — zero-downtime reload
 
 ## Identitas Brand (1-klik dari admin)
 
