@@ -109,9 +109,18 @@ A full-stack Shopee affiliate platform with AI-powered content generation, SEO-o
 
 ## VPS Deployment
 
-- `install.sh` — one-click installer for fresh Ubuntu/Debian VPS (apt deps, Node 24, PostgreSQL, PM2, auto-`.env`, build, start)
 - `ecosystem.config.cjs` — PM2 process file (api on 8080, web on 25500)
 - `INSTALL.md` — full VPS install guide (quick path + manual path + ops)
+
+## Shell Scripts (`.sh`)
+
+| File | Runs on | Trigger | Purpose |
+|---|---|---|---|
+| `install.sh` | VPS (Ubuntu/Debian) | Manual once: `./install.sh` | One-click fresh install — apt deps, Node 24, PostgreSQL, PM2, auto-generate `.env` (SESSION_SECRET + admin password), `pnpm install --frozen-lockfile`, drizzle push, build, `pm2 start`, **auto-setup `pm2 startup systemd`** for reboot persistence. Idempotent, supports env-var overrides (`INSTALL_PG`, `AUTO_BUILD`, `AUTO_START`, `DB_NAME`, `DB_USER`, `NODE_MAJOR`, `RUN_DB_PUSH`, `INSTALL_PM2`). Password admin **never printed to stdout** — read from `.env` via `sudo grep ADMIN_PASSWORD .env`. |
+| `scripts/deploy.sh` | VPS | Manual after `git pull`: `./scripts/deploy.sh` | Lightweight update flow — checks `.env` exists, runs `pnpm install --frozen-lockfile` → drizzle push → `pnpm run build` → `pm2 reload --update-env` (zero-downtime). Falls back to `pm2 start` if apps not registered. Skips apt/Postgres/PM2 install (use `install.sh` for that). Optionally symlink to `.git/hooks/post-merge` for auto-deploy on every pull. |
+| `scripts/post-merge.sh` | **Replit** (not VPS) | Auto via `.replit [postMerge]` after task-agent merge | Reconciles Replit env after merged work — `pnpm install --frozen-lockfile` + `pnpm --filter @workspace/db run push`. **Do not** add `pm2`/build calls here — PM2 doesn't exist in Replit and would crash the merge reconciliation. |
+
+> The two VPS scripts use `set -euo pipefail` (fail-fast) and are idempotent. Bash syntax validated with `bash -n`.
 
 ## Identitas Brand (1-klik dari admin)
 
