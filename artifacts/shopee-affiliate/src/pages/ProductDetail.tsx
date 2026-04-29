@@ -43,6 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCompare } from "@/hooks/use-compare";
 import { useRecentlyViewed } from "@/hooks/use-recently-viewed";
 import { setJsonLd, removeJsonLd } from "@/lib/jsonld";
+import { PriceHistoryChart } from "@/components/PriceHistoryChart";
 import { useEffect, useMemo, useState } from "react";
 
 const SHARE_PLATFORMS: Array<{
@@ -629,6 +630,18 @@ export default function ProductDetail() {
             )}
           </div>
         )}
+
+        {/* Riwayat Harga */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold mb-4">Riwayat Harga</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Pantau perubahan harga {product.name} dalam 90 hari terakhir untuk
+            tahu kapan waktu terbaik beli.
+          </p>
+          <div className="bg-card border border-border rounded-xl p-4 md:p-5">
+            <PriceHistoryChart slug={product.slug} />
+          </div>
+        </div>
 
         {/* Review Content */}
         {product.reviewContent && (

@@ -191,6 +191,16 @@ All third-party API keys and SEO settings are editable from `/admin/settings` an
 - `<SiteScripts/>` (mounted in Layout) injects verification meta tags and analytics scripts (GA4, Google Ads, Meta Pixel, TikTok Pixel) on first paint, plus SPA route-change pageview tracking.
 - Admin settings tabs: API Keys, Search Engine, Social Media, Analytics, SEO Umum, Schema.org.
 
+## Listicle, price tracker & schema (Fase 1)
+
+- **Best-of pages** — `/terbaik` (index) + `/terbaik/:slug` (detail). Auto-derived from product categories with ≥3 published products. Ranking score = `rating*20 + clickCount*3 + viewCount + min(soldCount,1000)*0.5`. Top 10 per category, with `ItemList` + `BreadcrumbList` JSON-LD. Endpoints: `GET /api/best-of`, `GET /api/best-of/:slug`. Slug derived via `slugify` (e.g. `Audio & Headphone` → `audio-and-headphone`).
+- **Price tracker** — `/harga-turun` shows products with current price < snapshot price 7 days ago, sorted by drop %. Endpoint: `GET /api/price-drops`. Each card shows a `-XX%` badge.
+- **Price history chart** — Embedded in `ProductDetail` (between Pros&Cons and Review). 90-day window, area chart via `recharts`. Endpoint: `GET /api/products/:slug/price-history` returns history + min/max/changePct stats. Renders only when ≥2 snapshots exist.
+- **Site-wide schema** — Layout already injects `Organization` + `WebSite` (with `SearchAction`) JSON-LD. `lib/jsonld.ts` exposes `setItemListLd` (now includes per-item Product+Offer+AggregateRating), `setBreadcrumbLd`, `setJsonLd`, `removeJsonLd`.
+- **Sitemap** — `/sitemap-pages.xml` now includes `/trending`, `/terbaik`, `/harga-turun`, and one URL per `/terbaik/:slug` (kategori dengan ≥3 produk).
+- **SSR meta injection** (`lib/seoInject.ts`) — Adds title/description/canonical/og for `/terbaik`, `/terbaik/:slug`, and `/harga-turun` so social bots see complete metadata before JS executes.
+- **Navigation** — Header gains "Terbaik" + "Harga Turun" links; mobile bottom nav swaps "Trending" for "Diskon" (link ke `/harga-turun`).
+
 ## Mobile responsiveness
 
 - `<MobileBottomNav/>` (md:hidden, fixed bottom): Beranda · Produk · Trending · Wishlist · Akun. Wishlist shows count badge.

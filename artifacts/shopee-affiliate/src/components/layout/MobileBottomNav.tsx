@@ -1,11 +1,11 @@
 import { Link, useLocation } from "wouter";
-import { Home, Search, Flame, GitCompareArrows } from "lucide-react";
+import { Home, Search, TrendingDown, GitCompareArrows } from "lucide-react";
 import { useCompare } from "@/hooks/use-compare";
 
 const NAV_ITEMS = [
   { href: "/", label: "Beranda", icon: Home, exact: true },
   { href: "/search", label: "Produk", icon: Search },
-  { href: "/trending", label: "Trending", icon: Flame },
+  { href: "/harga-turun", label: "Diskon", icon: TrendingDown },
   { href: "/compare", label: "Bandingin", icon: GitCompareArrows, badge: "compare" as const },
 ];
 
@@ -25,7 +25,7 @@ export function MobileBottomNav() {
         {NAV_ITEMS.map((it) => {
           const active = it.exact
             ? location === it.href
-            : location.startsWith(it.href);
+            : location === it.href || location.startsWith(`${it.href}/`);
           const badgeCount = it.badge === "compare" ? compareCount : 0;
           const showBadge = !!it.badge && badgeCount > 0;
           return (

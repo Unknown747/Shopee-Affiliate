@@ -20,6 +20,9 @@ const AboutPage = lazy(() => import("@/pages/AboutPage"));
 const SitemapPage = lazy(() => import("@/pages/SitemapPage"));
 const ComparePage = lazy(() => import("@/pages/ComparePage"));
 const TrendingPage = lazy(() => import("@/pages/TrendingPage"));
+const BestOfIndex = lazy(() => import("@/pages/BestOfIndex"));
+const BestOfDetail = lazy(() => import("@/pages/BestOfDetail"));
+const PriceDrops = lazy(() => import("@/pages/PriceDrops"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient({
@@ -71,6 +74,9 @@ function Router() {
       <Route path="/sitemap" component={SitemapPage} />
       <Route path="/compare" component={ComparePage} />
       <Route path="/trending" component={TrendingPage} />
+      <Route path="/terbaik" component={BestOfIndex} />
+      <Route path="/terbaik/:slug" component={BestOfDetail} />
+      <Route path="/harga-turun" component={PriceDrops} />
       <Route component={NotFound} />
     </Switch>
   );

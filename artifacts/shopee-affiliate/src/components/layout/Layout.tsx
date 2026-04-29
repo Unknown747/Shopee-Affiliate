@@ -347,6 +347,8 @@ export function Layout({ children }: { children: ReactNode }) {
   const navLinks = [
     { href: "/", label: "Beranda" },
     { href: "/search", label: "Semua Produk" },
+    { href: "/terbaik", label: "Terbaik" },
+    { href: "/harga-turun", label: "Harga Turun" },
     { href: "/trending", label: "Trending" },
     { href: "/about", label: "Tentang" },
   ];

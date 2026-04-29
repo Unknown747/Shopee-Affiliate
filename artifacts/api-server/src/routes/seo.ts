@@ -132,6 +132,38 @@ router.get("/sitemap-pages.xml", async (req, res) => {
     urls.push(
       `<url><loc>${base}/wishlist</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.4</priority></url>`,
     );
+    urls.push(
+      `<url><loc>${base}/trending</loc><lastmod>${now}</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>`,
+    );
+    urls.push(
+      `<url><loc>${base}/terbaik</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`,
+    );
+    urls.push(
+      `<url><loc>${base}/harga-turun</loc><lastmod>${now}</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>`,
+    );
+
+    // Best-of pages — satu URL per kategori (hanya kategori yang punya ≥3 produk)
+    const bestOfRows = await db
+      .select({
+        category: productsTable.category,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(productsTable)
+      .where(and(eq(productsTable.status, "published"), ne(productsTable.category, "")))
+      .groupBy(productsTable.category)
+      .having(sql`count(*) >= 3`);
+
+    for (const r of bestOfRows) {
+      if (!r.category) continue;
+      const slug = r.category
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      if (!slug) continue;
+      urls.push(
+        `<url><loc>${base}/terbaik/${slug}</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`,
+      );
+    }
 
     for (const c of categories) {
       if (!c.category) continue;

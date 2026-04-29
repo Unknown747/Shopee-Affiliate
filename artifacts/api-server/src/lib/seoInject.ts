@@ -392,6 +392,53 @@ export async function injectSeo(
     };
   }
 
+  if (path === "/terbaik" || path === "/terbaik/") {
+    return {
+      html: injectIntoHead(
+        html,
+        buildMetaBlock({
+          title: `Produk Terbaik per Kategori | ${SITE_NAME}`,
+          description:
+            "Daftar produk Shopee terbaik per kategori — dipilih dari rating, jumlah terjual, dan minat pembaca. Update otomatis tiap minggu.",
+          canonical,
+        }),
+      ),
+      status: 200,
+    };
+  }
+
+  const bestOfMatch = path.match(/^\/terbaik\/([^/?#]+)\/?$/);
+  if (bestOfMatch) {
+    const slug = bestOfMatch[1]!;
+    const readable = slug.replace(/-/g, " ");
+    return {
+      html: injectIntoHead(
+        html,
+        buildMetaBlock({
+          title: `10 ${readable} Terbaik — Rekomendasi & Harga | ${SITE_NAME}`,
+          description: `Daftar 10 ${readable} terbaik di Shopee, dipilih berdasarkan rating, jumlah terjual, dan minat pembaca. Cek harga & review sebelum beli.`,
+          canonical,
+        }),
+      ),
+      status: 200,
+    };
+  }
+
+  if (path === "/harga-turun") {
+    return {
+      html: injectIntoHead(
+        html,
+        buildMetaBlock({
+          title: `Produk Harga Turun Hari Ini | ${SITE_NAME}`,
+          description:
+            "Daftar produk Shopee yang harganya turun dalam 7 hari terakhir. Update otomatis — pantau diskon terbaru tanpa perlu cek satu-satu.",
+          canonical,
+        }),
+      ),
+      status: 200,
+    };
+  }
+
   if (path === "/trending") {
     return {
       html: injectIntoHead(

@@ -8,6 +8,8 @@ import adminRouter from "./adminRoutes.js";
 import searchRouter from "./search.js";
 import seoRouter from "./seo.js";
 import siteConfigRouter from "./siteConfig.js";
+import bestOfRouter from "./bestOf.js";
+import priceTrackerRouter from "./priceTracker.js";
 
 const router: IRouter = Router();
 
@@ -20,5 +22,7 @@ router.use(adminRouter);
 router.use(searchRouter);
 router.use(seoRouter);
 router.use(siteConfigRouter);
+router.use(bestOfRouter);
+router.use(priceTrackerRouter);
 
 export default router;
