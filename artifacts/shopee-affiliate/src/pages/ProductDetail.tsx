@@ -32,11 +32,55 @@ import {
   Info,
   GitCompare,
 } from "lucide-react";
+import {
+  FaWhatsapp,
+  FaTelegram,
+  FaXTwitter,
+  FaFacebookF,
+} from "react-icons/fa6";
+import type { IconType } from "react-icons";
 import { useToast } from "@/hooks/use-toast";
 import { useCompare } from "@/hooks/use-compare";
 import { useRecentlyViewed } from "@/hooks/use-recently-viewed";
 import { setJsonLd, removeJsonLd } from "@/lib/jsonld";
 import { useEffect, useMemo, useState } from "react";
+
+const SHARE_PLATFORMS: Array<{
+  id: "wa" | "telegram" | "twitter" | "fb";
+  label: string;
+  icon: IconType;
+  bg: string;
+  text: string;
+}> = [
+  {
+    id: "wa",
+    label: "WhatsApp",
+    icon: FaWhatsapp,
+    bg: "bg-[#25D366] hover:bg-[#1ebe57]",
+    text: "text-white border-transparent",
+  },
+  {
+    id: "telegram",
+    label: "Telegram",
+    icon: FaTelegram,
+    bg: "bg-[#0088cc] hover:bg-[#0077b3]",
+    text: "text-white border-transparent",
+  },
+  {
+    id: "twitter",
+    label: "X",
+    icon: FaXTwitter,
+    bg: "bg-black hover:bg-neutral-800",
+    text: "text-white border-transparent",
+  },
+  {
+    id: "fb",
+    label: "Facebook",
+    icon: FaFacebookF,
+    bg: "bg-[#1877F2] hover:bg-[#0e63d4]",
+    text: "text-white border-transparent",
+  },
+];
 
 type RelatedProduct = {
   id: string;
@@ -517,24 +561,25 @@ export default function ProductDetail() {
             </div>
 
             {/* Share buttons */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-muted-foreground flex items-center gap-1.5 mr-1">
                 <Share2 className="h-4 w-4" /> Bagikan:
               </span>
-              {[
-                { id: "wa", label: "WhatsApp", color: "text-green-600" },
-                { id: "telegram", label: "Telegram", color: "text-blue-500" },
-                { id: "twitter", label: "X", color: "text-foreground" },
-                { id: "fb", label: "Facebook", color: "text-blue-700" },
-              ].map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => handleShare(s.id)}
-                  className={`text-sm font-medium underline-offset-4 hover:underline ${s.color}`}
-                >
-                  {s.label}
-                </button>
-              ))}
+              {SHARE_PLATFORMS.map((s) => {
+                const Icon = s.icon;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => handleShare(s.id)}
+                    aria-label={`Bagikan ke ${s.label}`}
+                    title={`Bagikan ke ${s.label}`}
+                    className={`inline-flex items-center justify-center h-9 w-9 rounded-full border border-border transition-all hover:scale-110 hover:shadow-md ${s.bg} ${s.text}`}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
