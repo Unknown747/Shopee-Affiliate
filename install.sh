@@ -232,7 +232,7 @@ ENV
   chmod 600 "${ENV_FILE}"
   ok ".env dibuat di ${ENV_FILE} (chmod 600)"
   info "  - SESSION_SECRET   : auto-generated (48 byte)"
-  info "  - ADMIN_PASSWORD   : ${ADMIN_PASSWORD_GEN}  ${C_YELLOW}<< simpan baik-baik!${C_RESET}"
+  info "  - ADMIN_PASSWORD   : auto-generated — lihat dengan ${C_BOLD}sudo grep ADMIN_PASSWORD ${ENV_FILE}${C_RESET}"
   if [ -n "${DATABASE_URL_GENERATED}" ]; then
     info "  - DATABASE_URL     : terisi otomatis dengan password yang baru dibuat"
   else
@@ -247,7 +247,7 @@ step "6/8 pnpm install + push schema database"
 
 cd "${PROJECT_ROOT}"
 info "Menjalankan pnpm install (3-5 menit pertama kali)…"
-pnpm install --silent
+pnpm install --frozen-lockfile
 ok "Dependencies terinstall"
 
 if [ "${RUN_DB_PUSH}" = "1" ]; then
@@ -362,11 +362,8 @@ else
 fi
 
 if [ -f "${ENV_FILE}" ]; then
-  admin_pw="$(grep -E '^ADMIN_PASSWORD=' "${ENV_FILE}" | cut -d= -f2- || true)"
-  admin_user="$(grep -E '^ADMIN_USERNAME=' "${ENV_FILE}" | cut -d= -f2- || true)"
   echo
-  echo "${C_BOLD}Kredensial admin (tersimpan di .env):${C_RESET}"
-  [ -n "${admin_user}" ] && echo "  username : ${admin_user}"
-  [ -n "${admin_pw}" ]   && echo "  password : ${admin_pw}"
+  echo "${C_BOLD}Kredensial admin tersimpan di .env (chmod 600).${C_RESET}"
+  echo "  Lihat dengan : ${C_BOLD}sudo grep -E '^ADMIN_(USERNAME|PASSWORD)=' ${ENV_FILE}${C_RESET}"
 fi
 echo
