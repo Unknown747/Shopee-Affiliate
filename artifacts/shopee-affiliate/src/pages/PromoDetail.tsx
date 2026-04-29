@@ -102,8 +102,8 @@ export default function PromoDetail() {
         title={data ? `${data.promo.title} — Promo Shopee` : "Promo"}
         description={data?.promo.description ?? undefined}
         path={`/promo/${slug}`}
-        ogType="article"
-        ogImage={data?.promo.bannerImage ?? undefined}
+        type="article"
+        image={data?.promo.bannerImage ?? undefined}
         noindex={notFound}
       />
       <div className="container mx-auto px-4 py-8">

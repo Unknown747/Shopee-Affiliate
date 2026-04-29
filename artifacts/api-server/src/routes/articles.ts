@@ -88,7 +88,7 @@ router.get("/articles/:slug", httpCache({ maxAge: 300 }), async (req, res) => {
 
     return res.json({
       article,
-      related: related.filter((r) => r.slug !== slug).slice(0, 3),
+      related: related.filter((r: { slug: string }) => r.slug !== slug).slice(0, 3),
     });
   } catch (err) {
     (req as any).log?.error?.({ err }, "Error getting article");

@@ -72,6 +72,14 @@ A full-stack Shopee affiliate platform with AI-powered content generation, SEO-o
 - `/admin/products` — Product management (publish/delete)
 - `/about` — About + affiliate disclosure
 - `/sitemap` — Full sitemap (HTML)
+- `/terbaik`, `/terbaik/:slug` — Best-of listicles per kategori (Fase 1)
+- `/harga-turun` — Price tracker (Fase 1)
+- `/vs/:slug-a-vs-:slug-b` — Product comparison page (Fase 2)
+- `/brand`, `/brand/:slug` — Brand/toko hub (Fase 2)
+- `/koleksi`, `/koleksi/:slug` — Tematik tag-based collections (Fase 2)
+- `/blog`, `/blog/:slug` — Blog hub & artikel detail (Fase 3)
+- `/faq` — FAQ hub agregat dari semua produk (Fase 3)
+- `/promo`, `/promo/:slug` — Promo & event pages (Fase 3)
 
 ## SEO Endpoints (served via vite proxy from API)
 
@@ -199,7 +207,9 @@ All third-party API keys and SEO settings are editable from `/admin/settings` an
 - **Sitemap** — `/api/sitemap-pages.xml` extends with `/blog`, `/faq`, `/promo`, plus one URL per published article and per active promo.
 - **SSR injection** (`lib/seoInject.ts`) — Adds title/description/canonical for `/blog`, `/blog/:slug`, `/faq`, `/promo`, `/promo/:slug` (article variants use `og:type=article`).
 - **Navigation** — Footer "Jelajahi" gains "Promo & Event", "Blog", "FAQ" links.
-- **No admin UI yet** — articles and promos are seeded/managed via direct SQL (use `gen_random_uuid()` for IDs since drizzle's `$defaultFn` is JS-side only). Future work: add admin endpoints + minimal CMS UI.
+- **HTTP cache** — `/api/articles` & `/api/articles/:slug` pakai `httpCache({ maxAge: 300 })` (5 menit), `/api/promos*` pakai 120s. `/api/faq` pakai 600s karena lebih jarang berubah.
+- **SeoHead prop names** — komponen `SeoHead` menerima `image` & `type` (bukan `ogImage`/`ogType`). Per-page detail (`BlogDetail`, `PromoDetail`) lewatkan `noindex={notFound}` supaya Google tidak meng-index halaman 404.
+- **No admin UI yet** — articles dan promos di-seed/manage via SQL langsung (selalu pakai `gen_random_uuid()` untuk kolom `id` karena drizzle `$defaultFn` jalan di JS-side, bukan di DB-level). Future work: admin endpoint + CMS UI minimal.
 
 ## Discovery surfaces (Fase 2)
 

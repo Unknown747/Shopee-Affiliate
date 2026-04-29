@@ -114,11 +114,11 @@ export default function BlogDetail() {
   return (
     <Layout>
       <SeoHead
-        title={article?.metaTitle ?? article?.title}
+        title={article?.metaTitle ?? article?.title ?? "Blog"}
         description={article?.metaDesc ?? article?.excerpt ?? undefined}
         path={`/blog/${slug}`}
-        ogType="article"
-        ogImage={article?.coverImage ?? undefined}
+        type="article"
+        image={article?.coverImage ?? undefined}
         noindex={notFound}
       />
       <div className="container mx-auto px-4 py-8 max-w-3xl">
