@@ -110,6 +110,8 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         <img
           src={product.imageUrl}
           alt={product.name}
+          width={500}
+          height={500}
           className="object-cover w-full h-full group-hover:scale-[1.04] transition-transform duration-500"
           loading={priority ? "eager" : "lazy"}
           decoding="async"

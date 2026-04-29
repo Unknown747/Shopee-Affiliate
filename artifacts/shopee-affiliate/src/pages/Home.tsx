@@ -20,6 +20,7 @@ import {
 import { Layout } from "@/components/layout/Layout";
 import { SeoHead } from "@/components/SeoHead";
 import { ProductCard } from "@/components/ProductCard";
+import { setItemListLd, removeJsonLd } from "@/lib/jsonld";
 import {
   useListProducts,
   useListCategories,
@@ -344,6 +345,21 @@ export default function Home() {
       .catch(() => setTrending([]))
       .finally(() => setLoadingTrending(false));
   }, []);
+
+  // SEO: ItemList JSON-LD untuk produk populer (max 12)
+  useEffect(() => {
+    const list = productsData?.products ?? [];
+    if (list.length === 0) return;
+    setItemListLd(
+      "ld-itemlist-home",
+      list.slice(0, 12).map((p) => ({
+        slug: p.slug,
+        name: p.name,
+        imageUrl: p.imageUrl,
+      })),
+    );
+    return () => removeJsonLd("ld-itemlist-home");
+  }, [productsData]);
 
   return (
     <Layout>

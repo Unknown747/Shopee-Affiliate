@@ -7,6 +7,7 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { injectSeo } from "./lib/seoInject.js";
 
 const app: Express = express();
 
@@ -77,13 +78,27 @@ if (process.env["NODE_ENV"] === "production") {
     );
 
     const indexFile = path.join(staticDir, "index.html");
-    app.get(/^(?!\/api\/).*/, (_req, res, next) => {
-      fs.readFile(indexFile, "utf8", (err, html) => {
-        if (err) return next(err);
+    // Cache template di memori (re-baca otomatis saat berubah via fs.statSync mtime)
+    let cachedTemplate: { html: string; mtime: number } | null = null;
+    function loadTemplate(): string {
+      const mtime = fs.statSync(indexFile).mtimeMs;
+      if (!cachedTemplate || cachedTemplate.mtime !== mtime) {
+        cachedTemplate = { html: fs.readFileSync(indexFile, "utf8"), mtime };
+      }
+      return cachedTemplate.html;
+    }
+
+    app.get(/^(?!\/api\/).*/, async (req, res, next) => {
+      try {
+        const html = loadTemplate();
+        const result = await injectSeo(html, req.path, req);
+        res.status(result.status);
         res.setHeader("Content-Type", "text/html; charset=utf-8");
         res.setHeader("Cache-Control", "no-cache");
-        res.send(html);
-      });
+        res.send(result.html);
+      } catch (err) {
+        next(err);
+      }
     });
   } else {
     logger.warn({ candidates }, "Static frontend dir not found");

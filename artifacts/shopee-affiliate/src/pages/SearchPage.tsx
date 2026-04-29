@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearch, useLocation } from "wouter";
 import { Layout } from "@/components/layout/Layout";
 import { SeoHead } from "@/components/SeoHead";
 import { ProductCard } from "@/components/ProductCard";
+import { setItemListLd, removeJsonLd } from "@/lib/jsonld";
 import { useSearchProducts, useListCategories } from "@workspace/api-client-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,21 @@ export default function SearchPage() {
     page,
     limit: 12,
   });
+
+  // SEO: ItemList JSON-LD untuk hasil pencarian / kategori (max 24)
+  useEffect(() => {
+    const list = data?.products ?? [];
+    if (list.length === 0) return;
+    setItemListLd(
+      "ld-itemlist-search",
+      list.slice(0, 24).map((p) => ({
+        slug: p.slug,
+        name: p.name,
+        imageUrl: p.imageUrl,
+      })),
+    );
+    return () => removeJsonLd("ld-itemlist-search");
+  }, [data]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

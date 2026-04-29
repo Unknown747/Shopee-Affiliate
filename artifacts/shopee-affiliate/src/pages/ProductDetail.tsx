@@ -35,6 +35,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useCompare } from "@/hooks/use-compare";
 import { useRecentlyViewed } from "@/hooks/use-recently-viewed";
+import { setJsonLd, removeJsonLd } from "@/lib/jsonld";
 import { useEffect, useMemo, useState } from "react";
 
 type RelatedProduct = {
@@ -65,21 +66,6 @@ function setCanonical(href: string) {
     document.head.appendChild(el);
   }
   el.setAttribute("href", href);
-}
-
-function setJsonLd(id: string, data: Record<string, unknown>) {
-  let el = document.getElementById(id) as HTMLScriptElement | null;
-  if (!el) {
-    el = document.createElement("script");
-    el.id = id;
-    el.type = "application/ld+json";
-    document.head.appendChild(el);
-  }
-  el.textContent = JSON.stringify(data);
-}
-
-function removeJsonLd(id: string) {
-  document.getElementById(id)?.remove();
 }
 
 export default function ProductDetail() {
@@ -159,6 +145,10 @@ export default function ProductDetail() {
         url,
         priceCurrency: "IDR",
         price: product.price,
+        // priceValidUntil: 30 hari dari sekarang (Google Search Console butuh ini)
+        priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .slice(0, 10),
         availability: "https://schema.org/InStock",
         ...(product.shopName
           ? { seller: { "@type": "Organization", name: product.shopName } }
@@ -343,6 +333,8 @@ export default function ProductDetail() {
                 <img
                   src={heroImage}
                   alt={altText}
+                  width={800}
+                  height={800}
                   loading="eager"
                   decoding="async"
                   fetchPriority="high"
@@ -377,6 +369,8 @@ export default function ProductDetail() {
                       <img
                         src={img}
                         alt={`${product.name} - sudut ${i + 1}`}
+                        width={120}
+                        height={120}
                         loading="lazy"
                         className="w-full h-full object-cover"
                       />

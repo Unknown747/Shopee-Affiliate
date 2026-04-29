@@ -7,6 +7,10 @@ import { getOldPricesForProducts, attachPriceDrop } from "../services/priceHisto
 
 const router = Router();
 
+// Sitemap spec: max 50,000 URL per file. Kita pakai 5,000 per chunk supaya
+// file kecil & cepat di-fetch crawler.
+const PRODUCTS_PER_SITEMAP = 5000;
+
 function getBaseUrl(req: any): string {
   const envUrl = process.env["PUBLIC_BASE_URL"];
   if (envUrl) return envUrl.replace(/\/$/, "");
@@ -30,20 +34,82 @@ function getBaseUrl(req: any): string {
   return `${proto}://${host}`;
 }
 
+async function getProductCount(): Promise<number> {
+  const rows = await db
+    .select({ c: sql<number>`count(*)::int` })
+    .from(productsTable)
+    .where(eq(productsTable.status, "published"));
+  return rows[0]?.c ?? 0;
+}
+
+async function getMaxLastUpdated(): Promise<Date | null> {
+  const rows = await db
+    .select({ m: sql<Date | null>`max(${productsTable.lastUpdated})` })
+    .from(productsTable)
+    .where(eq(productsTable.status, "published"));
+  return rows[0]?.m ?? null;
+}
+
+/* ---------- /sitemap.xml — auto-pilih index vs flat ----------------------- */
+
 router.get("/sitemap.xml", async (req, res) => {
   try {
     const base = getBaseUrl(req);
+    const totalProducts = await getProductCount();
 
-    const [products, categories] = await Promise.all([
-      db
-        .select({
-          slug: productsTable.slug,
-          updatedAt: productsTable.lastUpdated,
-        })
-        .from(productsTable)
-        .where(eq(productsTable.status, "published"))
-        .orderBy(desc(productsTable.lastUpdated))
-        .limit(5000),
+    // Kalau produk ≤ PRODUCTS_PER_SITEMAP → satu file (flat)
+    // Kalau lebih → return SITEMAP-INDEX yang nunjuk ke chunk files
+    if (totalProducts > PRODUCTS_PER_SITEMAP) {
+      const numChunks = Math.ceil(totalProducts / PRODUCTS_PER_SITEMAP);
+      const maxLastUpdated = await getMaxLastUpdated();
+      const lastmod = (maxLastUpdated ?? new Date()).toISOString();
+
+      const sitemaps: string[] = [];
+      sitemaps.push(
+        `<sitemap><loc>${base}/sitemap-pages.xml</loc><lastmod>${lastmod}</lastmod></sitemap>`,
+      );
+      for (let i = 1; i <= numChunks; i++) {
+        sitemaps.push(
+          `<sitemap><loc>${base}/sitemap-products-${i}.xml</loc><lastmod>${lastmod}</lastmod></sitemap>`,
+        );
+      }
+
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${sitemaps.join("\n")}
+</sitemapindex>`;
+      res.set("Content-Type", "application/xml; charset=utf-8");
+      res.set("Cache-Control", "public, max-age=3600");
+      res.set("Last-Modified", new Date(lastmod).toUTCString());
+      return res.send(xml);
+    }
+
+    // Flat sitemap (≤ 5,000 produk)
+    return res.redirect(307, "/sitemap-pages.xml");
+  } catch (err) {
+    req.log.error({ err }, "Error generating sitemap");
+    return res.status(500).send("Sitemap error");
+  }
+});
+
+/* ---------- /sitemap-pages.xml — semua URL non-produk + (jika kecil) produk -- */
+
+router.get("/sitemap-pages.xml", async (req, res) => {
+  try {
+    const base = getBaseUrl(req);
+    const totalProducts = await getProductCount();
+
+    const [productsForFlat, categories] = await Promise.all([
+      totalProducts <= PRODUCTS_PER_SITEMAP
+        ? db
+            .select({
+              slug: productsTable.slug,
+              updatedAt: productsTable.lastUpdated,
+            })
+            .from(productsTable)
+            .where(eq(productsTable.status, "published"))
+            .orderBy(desc(productsTable.lastUpdated))
+        : Promise.resolve([] as Array<{ slug: string; updatedAt: Date | null }>),
       db
         .select({ category: productsTable.category })
         .from(productsTable)
@@ -74,7 +140,7 @@ router.get("/sitemap.xml", async (req, res) => {
       );
     }
 
-    for (const p of products) {
+    for (const p of productsForFlat) {
       const lastmod = (p.updatedAt ?? new Date()).toISOString();
       urls.push(
         `<url><loc>${base}/product/${p.slug}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`,
@@ -86,14 +152,71 @@ router.get("/sitemap.xml", async (req, res) => {
 ${urls.join("\n")}
 </urlset>`;
 
+    const lastModHeader =
+      productsForFlat.length > 0 && productsForFlat[0]?.updatedAt
+        ? new Date(productsForFlat[0].updatedAt).toUTCString()
+        : new Date().toUTCString();
+
     res.set("Content-Type", "application/xml; charset=utf-8");
     res.set("Cache-Control", "public, max-age=3600");
+    res.set("Last-Modified", lastModHeader);
     return res.send(xml);
   } catch (err) {
-    req.log.error({ err }, "Error generating sitemap");
+    req.log.error({ err }, "Error generating sitemap-pages");
     return res.status(500).send("Sitemap error");
   }
 });
+
+/* ---------- /sitemap-products-:n.xml — chunk produk -------------------- */
+
+router.get("/sitemap-products-:n.xml", async (req, res) => {
+  try {
+    const base = getBaseUrl(req);
+    const n = parseInt(req.params.n!, 10);
+    if (!Number.isInteger(n) || n < 1) return res.status(404).send("Not found");
+
+    const totalProducts = await getProductCount();
+    const maxN = Math.ceil(totalProducts / PRODUCTS_PER_SITEMAP);
+    if (n > maxN) return res.status(404).send("Not found");
+
+    const offset = (n - 1) * PRODUCTS_PER_SITEMAP;
+    const products = await db
+      .select({
+        slug: productsTable.slug,
+        updatedAt: productsTable.lastUpdated,
+      })
+      .from(productsTable)
+      .where(eq(productsTable.status, "published"))
+      .orderBy(desc(productsTable.lastUpdated))
+      .limit(PRODUCTS_PER_SITEMAP)
+      .offset(offset);
+
+    const urls = products.map((p) => {
+      const lastmod = (p.updatedAt ?? new Date()).toISOString();
+      return `<url><loc>${base}/product/${p.slug}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`;
+    });
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.join("\n")}
+</urlset>`;
+
+    const lastModHeader =
+      products.length > 0 && products[0]?.updatedAt
+        ? new Date(products[0].updatedAt).toUTCString()
+        : new Date().toUTCString();
+
+    res.set("Content-Type", "application/xml; charset=utf-8");
+    res.set("Cache-Control", "public, max-age=3600");
+    res.set("Last-Modified", lastModHeader);
+    return res.send(xml);
+  } catch (err) {
+    req.log.error({ err }, "Error generating sitemap-products chunk");
+    return res.status(500).send("Sitemap error");
+  }
+});
+
+/* ---------- /robots.txt ----------------------------------------------- */
 
 router.get("/robots.txt", async (req, res) => {
   const base = getBaseUrl(req);
@@ -103,6 +226,7 @@ Disallow: /admin
 Disallow: /admin/*
 Disallow: /generate
 Disallow: /api/
+Disallow: /search
 
 Sitemap: ${base}/sitemap.xml
 `;
@@ -110,6 +234,8 @@ Sitemap: ${base}/sitemap.xml
   res.set("Cache-Control", "public, max-age=86400");
   return res.send(body);
 });
+
+/* ---------- /feed.xml ------------------------------------------------- */
 
 router.get("/feed.xml", async (req, res) => {
   try {
@@ -157,6 +283,8 @@ ${items}
     return res.status(500).send("Feed error");
   }
 });
+
+/* ---------- /api/stats/trending --------------------------------------- */
 
 router.get("/stats/trending", httpCache({ maxAge: 120 }), async (req, res) => {
   try {

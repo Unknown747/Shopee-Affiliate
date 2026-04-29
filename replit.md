@@ -75,11 +75,29 @@ A full-stack Shopee affiliate platform with AI-powered content generation, SEO-o
 
 ## SEO Endpoints (served via vite proxy from API)
 
-- `/sitemap.xml` — XML sitemap (proxies to `/api/sitemap.xml`)
-- `/robots.txt` — Robots file (proxies to `/api/robots.txt`)
-- `/feed.xml` — RSS 2.0 feed of latest products (proxies to `/api/feed.xml`)
-- `/api/stats/trending` — Top trending products by view+click score
-- `/api/search/suggest?q=...` — Search auto-suggest
+- `/sitemap.xml` — XML sitemap. **Auto-pilih mode**: kalau produk ≤ 5,000 → redirect 307 ke `/sitemap-pages.xml` (flat); kalau > 5,000 → return sitemap-index yang nunjuk ke `/sitemap-pages.xml` + `/sitemap-products-N.xml` (5,000 produk per chunk).
+- `/sitemap-pages.xml` — Static pages + kategori + (jika produk ≤ 5,000) semua produk.
+- `/sitemap-products-:n.xml` — Chunk produk ke-n (5,000 per file). Aktif hanya kalau produk > 5,000.
+- `/robots.txt` — Robots file. Disallow `/admin`, `/generate`, `/api/`, `/search` (search results = thin content).
+- `/feed.xml` — RSS 2.0 feed of latest products.
+- `/api/stats/trending` — Top trending products by view+click score.
+- `/api/search/suggest?q=...` — Search auto-suggest.
+
+> Semua sitemap mengirim `Last-Modified` header sesuai `MAX(products.lastUpdated)` supaya crawler bisa conditional-fetch.
+
+## Server-Side SEO Injection (production only)
+
+`artifacts/api-server/src/lib/seoInject.ts` — meng-inject meta tags + JSON-LD ke
+`index.html` saat SPA fallback (Express) men-serve halaman, supaya bot yang tidak
+mengeksekusi JS (Bing, Yandex, Facebook/Twitter/WhatsApp link previewer) langsung
+dapet meta lengkap.
+
+- Aktif hanya saat `NODE_ENV=production` (di Replit dev pakai Vite dev server, jadi tidak relevan).
+- Per-route meta block: `/`, `/about`, `/sitemap`, `/trending`, `/wishlist`, `/search*`, `/admin*`, `/generate*`.
+- `/product/:slug` → DB lookup (LRU cache 5 menit) → inject Product + BreadcrumbList JSON-LD + custom title/desc/og:image. Slug tidak ditemukan → **HTTP 404** (bukan soft-404 200).
+- Path tidak dikenal → **HTTP 404** (penting biar Google tidak meng-index halaman tidak ada).
+- Idempotent: pakai marker `<!-- ssr-seo-start/end -->`. Template di-cache di memori (auto-refresh via `fs.statSync` mtime).
+- `<SeoHead/>` client-side tetap jalan dan meng-overwrite meta saat JS load (data terbaru dari API).
 
 ## Privacy
 
