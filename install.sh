@@ -317,13 +317,20 @@ if [ "${AUTO_START}" = "1" ] && [ "${AUTO_BUILD}" = "1" ] && command -v pm2 >/de
     pm2 save >/dev/null 2>&1 || true
     APP_STARTED=1
     ok "Aplikasi jalan via PM2"
+
+    # Setup pm2 startup otomatis (zero-touch — biar truly 1-klik)
+    PM2_USER="${SUDO_USER:-$(whoami)}"
+    PM2_HOME_DIR="$(getent passwd "${PM2_USER}" | cut -d: -f6 || echo "${HOME}")"
+    NODE_BIN_DIR="$(dirname "$(command -v node)")"
+    if $SUDO env PATH="${PATH}:${NODE_BIN_DIR}" "$(command -v pm2)" startup systemd -u "${PM2_USER}" --hp "${PM2_HOME_DIR}" >/dev/null 2>&1; then
+      pm2 save >/dev/null 2>&1 || true
+      ok "Auto-start saat reboot aktif (systemd unit untuk user: ${PM2_USER})"
+    else
+      warn "Auto-start gagal di-setup otomatis — jalankan manual: ${C_BOLD}pm2 startup systemd${C_RESET}"
+    fi
+
     echo
     pm2 status || true
-
-    # Tawarkan setup auto-start saat reboot
-    info "Untuk auto-start saat reboot, jalankan perintah berikut (sekali saja):"
-    echo "      ${C_BOLD}pm2 startup systemd${C_RESET}"
-    echo "      (lalu copy & jalankan baris 'sudo env PATH=...' yang muncul)"
   fi
 elif [ "${AUTO_START}" = "1" ]; then
   warn "8/8 PM2 start dilewati (PM2 atau build tidak siap)"
@@ -352,8 +359,7 @@ if [ "${APP_STARTED}" = "1" ]; then
   echo "${C_BOLD}Langkah berikutnya:${C_RESET}"
   echo "  1. Edit ${C_BOLD}PUBLIC_BASE_URL${C_RESET} di .env ke domain Anda → ${C_BOLD}pm2 restart all${C_RESET}"
   echo "  2. Setup Nginx + SSL    :  lihat INSTALL.md §10–§11"
-  echo "  3. Auto-start on boot   :  ${C_BOLD}pm2 startup systemd${C_RESET}  (ikuti instruksi yang muncul)"
-  echo "  4. Login admin          :  https://domain-anda.com/admin"
+  echo "  3. Login admin          :  https://domain-anda.com/admin"
 else
   echo "${C_BOLD}Langkah berikutnya (manual):${C_RESET}"
   echo "  1. Cek isi .env           :  cat ${ENV_FILE}"
