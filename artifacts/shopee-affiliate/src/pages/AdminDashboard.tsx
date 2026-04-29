@@ -121,7 +121,10 @@ export default function AdminDashboard() {
             <h1 className="text-3xl font-bold">Dashboard</h1>
             <p className="text-muted-foreground">Selamat datang di panel admin</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
+            <Button asChild variant="outline">
+              <Link href="/admin/seo">Audit SEO</Link>
+            </Button>
             <Button asChild variant="outline">
               <Link href="/generate">
                 <Plus className="h-4 w-4 mr-2" />

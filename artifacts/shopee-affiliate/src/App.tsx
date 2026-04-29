@@ -15,6 +15,7 @@ const AdminLogin = lazy(() => import("@/pages/AdminLogin"));
 const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
 const AdminProducts = lazy(() => import("@/pages/AdminProducts"));
 const AdminSettings = lazy(() => import("@/pages/AdminSettings"));
+const AdminSeoAudit = lazy(() => import("@/pages/AdminSeoAudit"));
 const AboutPage = lazy(() => import("@/pages/AboutPage"));
 const SitemapPage = lazy(() => import("@/pages/SitemapPage"));
 const ComparePage = lazy(() => import("@/pages/ComparePage"));
@@ -62,6 +63,9 @@ function Router() {
       </Route>
       <Route path="/admin/settings">
         {() => <AdminGuard component={AdminSettings} />}
+      </Route>
+      <Route path="/admin/seo">
+        {() => <AdminGuard component={AdminSeoAudit} />}
       </Route>
       <Route path="/about" component={AboutPage} />
       <Route path="/sitemap" component={SitemapPage} />

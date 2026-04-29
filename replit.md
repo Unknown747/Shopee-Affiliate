@@ -99,6 +99,21 @@ dapet meta lengkap.
 - Idempotent: pakai marker `<!-- ssr-seo-start/end -->`. Template di-cache di memori (auto-refresh via `fs.statSync` mtime).
 - `<SeoHead/>` client-side tetap jalan dan meng-overwrite meta saat JS load (data terbaru dari API).
 
+## Admin SEO Audit
+
+`GET /api/admin/seo-audit` (JWT-protected) — Audit semua produk **published** dan
+laporkan kelengkapan field SEO. Response: `{ summary, labels, severities, products }`.
+
+- **High** (penalti 20): meta title/desc kosong, gambar kosong.
+- **Medium** (penalti 8): tidak ada FAQ, pros/cons, review pendek, kategori kosong.
+- **Low** (penalti 3): tidak ada tags, nama pendek, meta title/desc kepanjangan/kependekan.
+- Skor produk: `max(0, 100 - total_penalti)`.
+
+UI: `/admin/seo` (`AdminSeoAudit.tsx`) — kartu summary (skor rata-rata, count perfect/high/medium/low),
+breakdown per jenis issue (clickable filter), filter search/severity/issue, list produk dengan
+tombol langsung **Lihat** (PDP) & **Edit** (form admin). Pakai raw fetch + `getAdminToken()`
+(tidak lewat OpenAPI codegen). Link cepat dari Dashboard admin → tombol "Audit SEO".
+
 ## Privacy
 
 - Public product API responses strip `commission` and `commissionRate` fields (admin-only)
