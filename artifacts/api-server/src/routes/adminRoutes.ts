@@ -8,6 +8,20 @@ import {
   UpsertSettingBody,
 } from "@workspace/api-zod";
 import jwt from "jsonwebtoken";
+import { generateProductContent } from "../services/aiService.js";
+import { deleteCached, deleteCachedByPattern } from "../services/cacheService.js";
+
+/**
+ * Invalidate public cache keys that may hold a stale view of a product
+ * after its SEO fields have been auto-filled. Mirrors the helper in
+ * routes/affiliate.ts.
+ */
+function invalidateProductCaches(slug?: string | null): void {
+  if (slug) deleteCached(`product:${slug}`);
+  deleteCachedByPattern("products:");
+  deleteCachedByPattern("trending:");
+  deleteCachedByPattern("search:");
+}
 
 const router = Router();
 
@@ -283,6 +297,121 @@ router.get("/admin/seo-audit", verifyAdminToken, async (req, res) => {
     return res.status(500).json({ error: "Failed to generate SEO audit" });
   }
 });
+
+/* ---------- SEO Audit Auto-Fix ---------------------------------------- *
+ * Mengisi field SEO yang kosong (metaTitle / metaDesc / faq / pros / cons)
+ * via Gemini. Field yang sudah terisi tidak akan ditimpa.
+ * ---------------------------------------------------------------------- */
+
+const AUTO_FIX_FIELD_LABELS: Record<string, string> = {
+  metaTitle: "Meta title",
+  metaDesc: "Meta description",
+  faq: "FAQ",
+  pros: "Kelebihan (pros)",
+  cons: "Kekurangan (cons)",
+};
+
+router.post(
+  "/admin/seo-audit/auto-fix/:productId",
+  verifyAdminToken,
+  async (req, res) => {
+    try {
+      const productId = req.params["productId"];
+      if (!productId) {
+        return res.status(400).json({ error: "productId required" });
+      }
+
+      const products = await db
+        .select()
+        .from(productsTable)
+        .where(eq(productsTable.id, productId))
+        .limit(1);
+
+      const product = products[0];
+      if (!product) {
+        return res.status(404).json({
+          error: "Not found",
+          message: "Produk tidak ditemukan",
+        });
+      }
+
+      const needsMetaTitle =
+        !product.metaTitle || product.metaTitle.trim().length < 10;
+      const needsMetaDesc =
+        !product.metaDesc || product.metaDesc.trim().length < 50;
+      const needsFaq =
+        !product.faq || (Array.isArray(product.faq) && product.faq.length === 0);
+      const needsPros = !product.pros || product.pros.length === 0;
+      const needsCons = !product.cons || product.cons.length === 0;
+
+      const anyNeeded =
+        needsMetaTitle || needsMetaDesc || needsFaq || needsPros || needsCons;
+
+      if (!anyNeeded) {
+        return res.json({
+          filled: [],
+          message: "Tidak ada field SEO yang kosong untuk diisi.",
+        });
+      }
+
+      const content = await generateProductContent({
+        productName: product.name,
+        productCategory: product.category ?? undefined,
+        price: product.price ?? undefined,
+      });
+
+      const updateSet: Record<string, unknown> = { lastUpdated: new Date() };
+      const filled: string[] = [];
+
+      if (needsMetaTitle && content.metaTitle) {
+        updateSet["metaTitle"] = content.metaTitle;
+        filled.push("metaTitle");
+      }
+      if (needsMetaDesc && content.metaDesc) {
+        updateSet["metaDesc"] = content.metaDesc;
+        filled.push("metaDesc");
+      }
+      if (needsFaq && content.faq && content.faq.length > 0) {
+        updateSet["faq"] = content.faq;
+        filled.push("faq");
+      }
+      if (needsPros && content.pros && content.pros.length > 0) {
+        updateSet["pros"] = content.pros;
+        filled.push("pros");
+      }
+      if (needsCons && content.cons && content.cons.length > 0) {
+        updateSet["cons"] = content.cons;
+        filled.push("cons");
+      }
+
+      if (filled.length === 0) {
+        return res.status(502).json({
+          error: "AI returned empty content",
+          message: "AI tidak menghasilkan konten yang bisa dipakai. Coba lagi.",
+        });
+      }
+
+      await db
+        .update(productsTable)
+        .set(updateSet)
+        .where(eq(productsTable.id, productId));
+
+      invalidateProductCaches(product.slug);
+
+      return res.json({
+        filled,
+        labels: AUTO_FIX_FIELD_LABELS,
+        message: `Berhasil mengisi ${filled.length} field via AI.`,
+      });
+    } catch (err) {
+      req.log.error({ err }, "Error auto-fixing product SEO");
+      return res.status(500).json({
+        error: "Auto-fix failed",
+        message: err instanceof Error ? err.message : "Auto-fix gagal",
+      });
+    }
+  },
+);
 
 router.post("/admin/settings", verifyAdminToken, async (req, res) => {
   try {

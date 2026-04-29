@@ -24,6 +24,8 @@ import {
   ExternalLink,
   Edit,
   TrendingUp,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 
 const API_BASE = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
@@ -88,6 +90,7 @@ export default function AdminSeoAudit() {
   const [search, setSearch] = useState("");
   const [severityFilter, setSeverityFilter] = useState<Severity | "all">("all");
   const [issueFilter, setIssueFilter] = useState<string>("all");
+  const [fixingIds, setFixingIds] = useState<Set<string>>(new Set());
 
   async function fetchAudit() {
     try {
@@ -139,6 +142,77 @@ export default function AdminSeoAudit() {
     setRefreshing(true);
     fetchAudit();
   };
+
+  const FIXABLE_ISSUES = new Set([
+    "missingMetaTitle",
+    "missingMetaDesc",
+    "noFaq",
+    "noProsCons",
+  ]);
+
+  function hasFixableIssue(issues: string[]): boolean {
+    return issues.some((iss) => FIXABLE_ISSUES.has(iss));
+  }
+
+  async function handleAutoFix(productId: string, productName: string) {
+    setFixingIds((prev) => {
+      const next = new Set(prev);
+      next.add(productId);
+      return next;
+    });
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/admin/seo-audit/auto-fix/${productId}`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      const json = (await res.json()) as {
+        filled?: string[];
+        labels?: Record<string, string>;
+        message?: string;
+        error?: string;
+      };
+      if (!res.ok) {
+        throw new Error(json.message || json.error || `HTTP ${res.status}`);
+      }
+
+      const filled = json.filled ?? [];
+      const labels = json.labels ?? {};
+      const filledLabels =
+        filled.length > 0
+          ? filled.map((f) => labels[f] ?? f).join(", ")
+          : "tidak ada";
+
+      toast({
+        title:
+          filled.length > 0
+            ? `Auto-fix berhasil untuk "${productName.slice(0, 40)}"`
+            : "Tidak ada field kosong",
+        description:
+          filled.length > 0
+            ? `Field terisi: ${filledLabels}`
+            : json.message ?? "Semua field SEO sudah terisi.",
+      });
+
+      if (filled.length > 0) {
+        await fetchAudit();
+      }
+    } catch (err) {
+      toast({
+        title: "Auto-fix gagal",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setFixingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(productId);
+        return next;
+      });
+    }
+  }
 
   return (
     <Layout>
@@ -425,12 +499,38 @@ export default function AdminSeoAudit() {
                       )}
                     </div>
 
-                    <div className="flex gap-2 flex-shrink-0">
+                    <div className="flex gap-2 flex-shrink-0 flex-wrap">
                       <Button asChild variant="outline" size="sm">
                         <Link href={`/product/${p.slug}`}>
                           <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                           Lihat
                         </Link>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => handleAutoFix(p.id, p.name)}
+                        disabled={
+                          fixingIds.has(p.id) || !hasFixableIssue(p.issues)
+                        }
+                        title={
+                          hasFixableIssue(p.issues)
+                            ? "Isi meta title/desc/FAQ/pros-cons yang kosong via Gemini"
+                            : "Tidak ada field kosong yang bisa di-auto-fix"
+                        }
+                        className="bg-gradient-to-r from-violet-500/15 to-fuchsia-500/15 hover:from-violet-500/25 hover:to-fuchsia-500/25 border border-violet-500/30 text-violet-700 dark:text-violet-300"
+                      >
+                        {fixingIds.has(p.id) ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                            Memproses...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                            Auto-fix dengan AI
+                          </>
+                        )}
                       </Button>
                       <Button asChild size="sm">
                         <Link href={`/admin/products?edit=${p.id}`}>
