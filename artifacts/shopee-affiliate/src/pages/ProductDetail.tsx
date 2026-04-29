@@ -250,7 +250,7 @@ export default function ProductDetail() {
       setLinkCopied(true);
       toast({
         title: "Link berhasil disalin!",
-        description: "Tautan afiliasi sudah ada di clipboard Anda.",
+        description: "Tautan produk sudah ada di clipboard Anda.",
       });
       setTimeout(() => setLinkCopied(false), 2500);
     } catch {
@@ -520,13 +520,6 @@ export default function ProductDetail() {
                   <span className="text-xs">({compareCount}/{compareMax})</span>
                 )}
               </Button>
-            </div>
-
-            <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 p-3 text-xs text-amber-900 dark:text-amber-100 flex gap-2">
-              <Info className="h-4 w-4 flex-none mt-0.5" />
-              <p>
-                <strong>Pengungkapan Afiliasi:</strong> Tautan di halaman ini adalah link afiliasi. Kami mendapat komisi kecil bila Anda membeli melalui link tersebut, tanpa biaya tambahan untuk Anda. Review tetap independen.
-              </p>
             </div>
 
             {/* Share buttons */}
@@ -834,8 +827,7 @@ export default function ProductDetail() {
             </a>
           </Button>
           <p className="text-xs text-muted-foreground mt-4">
-            Kami adalah mitra afiliasi Shopee. Tautan di atas menggunakan{" "}
-            <code className="text-[10px]">rel="sponsored nofollow"</code>.
+            Anda akan diarahkan ke halaman resmi Shopee untuk menyelesaikan pembelian.
           </p>
         </div>
 

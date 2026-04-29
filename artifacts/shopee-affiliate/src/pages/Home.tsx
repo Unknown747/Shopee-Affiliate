@@ -373,7 +373,7 @@ export default function Home() {
                 di Shopee
               </h1>
               <p className="text-base md:text-lg text-muted-foreground mb-7 max-w-lg mx-auto lg:mx-0 leading-relaxed">
-                Ribuan produk pilihan, review jujur, dan link afiliasi terupdate.
+                Ribuan produk pilihan, review jujur, dan harga terupdate tiap hari.
                 Hemat waktu, hemat uang, belanja tanpa ragu.
               </p>
 

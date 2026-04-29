@@ -267,7 +267,7 @@ function PromoBar() {
           </span>
           <span className="hidden lg:inline-flex items-center gap-1.5 opacity-90">
             <ShieldCheck className="h-3 w-3" />
-            <span>Resmi · partner Shopee Affiliate</span>
+            <span>Belanja langsung di Shopee · aman & resmi</span>
           </span>
         </div>
         <div className="flex items-center gap-4">
