@@ -191,6 +191,16 @@ All third-party API keys and SEO settings are editable from `/admin/settings` an
 - `<SiteScripts/>` (mounted in Layout) injects verification meta tags and analytics scripts (GA4, Google Ads, Meta Pixel, TikTok Pixel) on first paint, plus SPA route-change pageview tracking.
 - Admin settings tabs: API Keys, Search Engine, Social Media, Analytics, SEO Umum, Schema.org.
 
+## Editorial & event surfaces (Fase 3)
+
+- **Blog hub** — `/blog` (list) + `/blog/:slug` (detail). Backed by `articles` table (slug, title, excerpt, content as HTML, coverImage, category, tags, author, status, publishedAt, viewCount). Detail increments `viewCount` async on each fetch and shows up to 3 related articles from the same category. JSON-LD: `Article` (with publisher = site brand) + `BreadcrumbList`. Endpoints: `GET /api/articles?limit&offset&category`, `GET /api/articles/:slug`. Content stored as trusted admin HTML, rendered via `dangerouslySetInnerHTML` with Tailwind `prose` styling — no markdown deps.
+- **FAQ hub** — `/faq` aggregates ALL product `faq` jsonb entries from published products, grouped by category, deduped by question text (max 30 per category). Each FAQ links back to its source product. JSON-LD: `FAQPage` (top 30) + `BreadcrumbList`. Endpoint: `GET /api/faq`. Zero-config — populates automatically as products gain FAQs.
+- **Promo/event pages** — `/promo` (active list) + `/promo/:slug` (detail). Backed by `promos` table (slug, title, description, bannerImage, tag, ctaText, startDate, endDate, status). Active filter: `status='published' AND (startDate IS NULL OR ≤ NOW()) AND (endDate IS NULL OR ≥ NOW())`. Detail shows banner + product grid filtered by `tag` (case-insensitive lookup against products.tags jsonb), top 24 by composite score, with price-drop badges via `priceHistoryService`. JSON-LD: `SaleEvent` + `ItemList` + `BreadcrumbList`. Endpoints: `GET /api/promos`, `GET /api/promos/:slug`.
+- **Sitemap** — `/api/sitemap-pages.xml` extends with `/blog`, `/faq`, `/promo`, plus one URL per published article and per active promo.
+- **SSR injection** (`lib/seoInject.ts`) — Adds title/description/canonical for `/blog`, `/blog/:slug`, `/faq`, `/promo`, `/promo/:slug` (article variants use `og:type=article`).
+- **Navigation** — Footer "Jelajahi" gains "Promo & Event", "Blog", "FAQ" links.
+- **No admin UI yet** — articles and promos are seeded/managed via direct SQL (use `gen_random_uuid()` for IDs since drizzle's `$defaultFn` is JS-side only). Future work: add admin endpoints + minimal CMS UI.
+
 ## Discovery surfaces (Fase 2)
 
 - **VS pages** — `/vs/:slug-a-vs-:slug-b`. Side-by-side comparison of two products: harga, rating, terjual, toko, kategori, pros/cons, link beli. Slug split on the first `-vs-`. Endpoint: `GET /api/vs/:slugA/:slugB`. JSON-LD: `Article` with two `Product` entities + `BreadcrumbList`. Tidak masuk sitemap (terlalu kombinatorik) — mengandalkan internal links + organic discovery.

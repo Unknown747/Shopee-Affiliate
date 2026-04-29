@@ -28,6 +28,11 @@ const BrandIndex = lazy(() => import("@/pages/BrandIndex"));
 const BrandDetail = lazy(() => import("@/pages/BrandDetail"));
 const KoleksiIndex = lazy(() => import("@/pages/KoleksiIndex"));
 const KoleksiDetail = lazy(() => import("@/pages/KoleksiDetail"));
+const FaqHub = lazy(() => import("@/pages/FaqHub"));
+const BlogIndex = lazy(() => import("@/pages/BlogIndex"));
+const BlogDetail = lazy(() => import("@/pages/BlogDetail"));
+const PromoIndex = lazy(() => import("@/pages/PromoIndex"));
+const PromoDetail = lazy(() => import("@/pages/PromoDetail"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient({
@@ -87,6 +92,11 @@ function Router() {
       <Route path="/brand/:slug" component={BrandDetail} />
       <Route path="/koleksi" component={KoleksiIndex} />
       <Route path="/koleksi/:slug" component={KoleksiDetail} />
+      <Route path="/faq" component={FaqHub} />
+      <Route path="/blog" component={BlogIndex} />
+      <Route path="/blog/:slug" component={BlogDetail} />
+      <Route path="/promo" component={PromoIndex} />
+      <Route path="/promo/:slug" component={PromoDetail} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -503,6 +503,87 @@ export async function injectSeo(
     };
   }
 
+  if (path === "/faq" || path === "/faq/") {
+    return {
+      html: injectIntoHead(
+        html,
+        buildMetaBlock({
+          title: `Pertanyaan yang Sering Ditanya (FAQ) | ${SITE_NAME}`,
+          description:
+            "Kumpulan pertanyaan dan jawaban paling sering dari pembaca tentang produk Shopee yang kami review — spesifikasi, garansi, hingga cara perawatan.",
+          canonical,
+        }),
+      ),
+      status: 200,
+    };
+  }
+
+  if (path === "/blog" || path === "/blog/") {
+    return {
+      html: injectIntoHead(
+        html,
+        buildMetaBlock({
+          title: `Blog & Panduan Belanja | ${SITE_NAME}`,
+          description:
+            "Artikel panduan, tips, dan ulasan mendalam seputar produk Shopee terpilih. Update tiap minggu.",
+          canonical,
+        }),
+      ),
+      status: 200,
+    };
+  }
+
+  const blogMatch = path.match(/^\/blog\/([^/?#]+)\/?$/);
+  if (blogMatch) {
+    const slug = blogMatch[1]!;
+    const readable = slug.replace(/-/g, " ");
+    return {
+      html: injectIntoHead(
+        html,
+        buildMetaBlock({
+          title: `${readable} | Blog ${SITE_NAME}`,
+          description: `Baca panduan lengkap "${readable}" — tips & rekomendasi produk Shopee dari ${SITE_NAME}.`,
+          canonical,
+          ogType: "article",
+        }),
+      ),
+      status: 200,
+    };
+  }
+
+  if (path === "/promo" || path === "/promo/") {
+    return {
+      html: injectIntoHead(
+        html,
+        buildMetaBlock({
+          title: `Promo & Event Belanja | ${SITE_NAME}`,
+          description:
+            "Daftar promo Shopee aktif: flash sale, harbolnas, voucher. Update tiap minggu — jangan sampai kelewat.",
+          canonical,
+        }),
+      ),
+      status: 200,
+    };
+  }
+
+  const promoMatch = path.match(/^\/promo\/([^/?#]+)\/?$/);
+  if (promoMatch) {
+    const slug = promoMatch[1]!;
+    const readable = slug.replace(/-/g, " ");
+    return {
+      html: injectIntoHead(
+        html,
+        buildMetaBlock({
+          title: `${readable} — Promo Shopee | ${SITE_NAME}`,
+          description: `Promo "${readable}" di Shopee — daftar produk yang masuk promo, harga, dan periode berlaku.`,
+          canonical,
+          ogType: "article",
+        }),
+      ),
+      status: 200,
+    };
+  }
+
   const vsMatch = path.match(/^\/vs\/([^/?#]+)\/?$/);
   if (vsMatch) {
     const pair = vsMatch[1]!;

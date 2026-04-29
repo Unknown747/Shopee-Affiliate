@@ -617,6 +617,30 @@ export function Layout({ children }: { children: ReactNode }) {
                 </li>
                 <li>
                   <Link
+                    href="/promo"
+                    className="hover:text-primary transition-colors"
+                  >
+                    Promo & Event
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/blog"
+                    className="hover:text-primary transition-colors"
+                  >
+                    Blog
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/faq"
+                    className="hover:text-primary transition-colors"
+                  >
+                    FAQ
+                  </Link>
+                </li>
+                <li>
+                  <Link
                     href="/about"
                     className="hover:text-primary transition-colors"
                   >

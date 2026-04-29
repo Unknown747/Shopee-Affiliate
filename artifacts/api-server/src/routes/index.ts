@@ -11,6 +11,9 @@ import siteConfigRouter from "./siteConfig.js";
 import bestOfRouter from "./bestOf.js";
 import priceTrackerRouter from "./priceTracker.js";
 import discoveryRouter from "./discovery.js";
+import faqRouter from "./faq.js";
+import articlesRouter from "./articles.js";
+import promosRouter from "./promos.js";
 
 const router: IRouter = Router();
 
@@ -26,5 +29,8 @@ router.use(siteConfigRouter);
 router.use(bestOfRouter);
 router.use(priceTrackerRouter);
 router.use(discoveryRouter);
+router.use(faqRouter);
+router.use(articlesRouter);
+router.use(promosRouter);
 
 export default router;

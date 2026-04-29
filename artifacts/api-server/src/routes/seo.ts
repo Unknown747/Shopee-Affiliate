@@ -147,6 +147,55 @@ router.get("/sitemap-pages.xml", async (req, res) => {
     urls.push(
       `<url><loc>${base}/koleksi</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>`,
     );
+    urls.push(
+      `<url><loc>${base}/faq</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>`,
+    );
+    urls.push(
+      `<url><loc>${base}/blog</loc><lastmod>${now}</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>`,
+    );
+    urls.push(
+      `<url><loc>${base}/promo</loc><lastmod>${now}</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>`,
+    );
+
+    // Blog articles
+    try {
+      const articleRows = await db.execute<{ slug: string; updated_at: Date | null; published_at: Date | null }>(
+        sql`SELECT slug, updated_at, published_at FROM articles WHERE status = 'published'`,
+      );
+      const articles =
+        (articleRows as unknown as { rows?: Array<{ slug: string; updated_at: Date | null; published_at: Date | null }> }).rows ??
+        (articleRows as unknown as Array<{ slug: string; updated_at: Date | null; published_at: Date | null }>);
+      for (const a of articles) {
+        const lastmod = (a.updated_at ?? a.published_at ?? new Date()).toISOString
+          ? (a.updated_at ?? a.published_at ?? new Date()).toISOString()
+          : new Date(a.updated_at ?? a.published_at ?? Date.now()).toISOString();
+        urls.push(
+          `<url><loc>${base}/blog/${a.slug}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`,
+        );
+      }
+    } catch {
+      /* skip if articles table missing */
+    }
+
+    // Promo events (active only)
+    try {
+      const promoRows = await db.execute<{ slug: string }>(sql`
+        SELECT slug FROM promos
+        WHERE status = 'published'
+          AND (start_date IS NULL OR start_date <= NOW())
+          AND (end_date IS NULL OR end_date >= NOW())
+      `);
+      const promos =
+        (promoRows as unknown as { rows?: Array<{ slug: string }> }).rows ??
+        (promoRows as unknown as Array<{ slug: string }>);
+      for (const p of promos) {
+        urls.push(
+          `<url><loc>${base}/promo/${p.slug}</loc><lastmod>${now}</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>`,
+        );
+      }
+    } catch {
+      /* skip if promos table missing */
+    }
 
     // Brand pages — satu URL per shopName (≥2 produk)
     const brandRows = await db
