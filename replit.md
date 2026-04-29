@@ -191,6 +191,16 @@ All third-party API keys and SEO settings are editable from `/admin/settings` an
 - `<SiteScripts/>` (mounted in Layout) injects verification meta tags and analytics scripts (GA4, Google Ads, Meta Pixel, TikTok Pixel) on first paint, plus SPA route-change pageview tracking.
 - Admin settings tabs: API Keys, Search Engine, Social Media, Analytics, SEO Umum, Schema.org.
 
+## Discovery surfaces (Fase 2)
+
+- **VS pages** — `/vs/:slug-a-vs-:slug-b`. Side-by-side comparison of two products: harga, rating, terjual, toko, kategori, pros/cons, link beli. Slug split on the first `-vs-`. Endpoint: `GET /api/vs/:slugA/:slugB`. JSON-LD: `Article` with two `Product` entities + `BreadcrumbList`. Tidak masuk sitemap (terlalu kombinatorik) — mengandalkan internal links + organic discovery.
+- **Brand pages** — `/brand` (index), `/brand/:slug` (detail). Auto-grouped by `shopName` (≥2 produk). Detail shows top 24 products sorted by composite score, plus `Brand` schema with `AggregateRating` + `BreadcrumbList`. Endpoints: `GET /api/brands`, `GET /api/brands/:slug`.
+- **Koleksi tematik** — `/koleksi` (index), `/koleksi/:slug` (detail). Auto-derived from `tags` jsonb array (≥3 produk per tag). Tag matching is case-insensitive; slug derived via `slugify` (lowercase, strict, locale=id, `&`→`and`). Endpoints: `GET /api/koleksi`, `GET /api/koleksi/:slug`. JSON-LD: `ItemList` + `BreadcrumbList`.
+- **Sitemap** — `/api/sitemap-pages.xml` extends with `/brand`, `/koleksi`, plus one URL per brand (≥2 produk) and per tag (≥3 produk).
+- **SSR injection** (`lib/seoInject.ts`) — Adds title/description/canonical for `/vs/:pair`, `/brand`, `/brand/:slug`, `/koleksi`, `/koleksi/:slug`.
+- **Navigation** — Footer "Jelajahi" gains "Brand & Toko" + "Koleksi Tematik" links (header sudah penuh).
+- **Note penting**: API server mounted at `/api` — semua endpoint internal punya prefix `/api/...` termasuk sitemap (`/api/sitemap-pages.xml`). Yang di-expose ke crawler di root level cuma rewrite `/sitemap.xml`, `/robots.txt`, `/feed.xml` (lihat `app.ts`).
+
 ## Listicle, price tracker & schema (Fase 1)
 
 - **Best-of pages** — `/terbaik` (index) + `/terbaik/:slug` (detail). Auto-derived from product categories with ≥3 published products. Ranking score = `rating*20 + clickCount*3 + viewCount + min(soldCount,1000)*0.5`. Top 10 per category, with `ItemList` + `BreadcrumbList` JSON-LD. Endpoints: `GET /api/best-of`, `GET /api/best-of/:slug`. Slug derived via `slugify` (e.g. `Audio & Headphone` → `audio-and-headphone`).

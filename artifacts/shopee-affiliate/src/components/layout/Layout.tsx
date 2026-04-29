@@ -601,6 +601,22 @@ export function Layout({ children }: { children: ReactNode }) {
                 </li>
                 <li>
                   <Link
+                    href="/brand"
+                    className="hover:text-primary transition-colors"
+                  >
+                    Brand & Toko
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/koleksi"
+                    className="hover:text-primary transition-colors"
+                  >
+                    Koleksi Tematik
+                  </Link>
+                </li>
+                <li>
+                  <Link
                     href="/about"
                     className="hover:text-primary transition-colors"
                   >

@@ -10,6 +10,7 @@ import seoRouter from "./seo.js";
 import siteConfigRouter from "./siteConfig.js";
 import bestOfRouter from "./bestOf.js";
 import priceTrackerRouter from "./priceTracker.js";
+import discoveryRouter from "./discovery.js";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use(seoRouter);
 router.use(siteConfigRouter);
 router.use(bestOfRouter);
 router.use(priceTrackerRouter);
+router.use(discoveryRouter);
 
 export default router;

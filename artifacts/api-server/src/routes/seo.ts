@@ -141,6 +141,66 @@ router.get("/sitemap-pages.xml", async (req, res) => {
     urls.push(
       `<url><loc>${base}/harga-turun</loc><lastmod>${now}</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>`,
     );
+    urls.push(
+      `<url><loc>${base}/brand</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>`,
+    );
+    urls.push(
+      `<url><loc>${base}/koleksi</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>`,
+    );
+
+    // Brand pages — satu URL per shopName (≥2 produk)
+    const brandRows = await db
+      .select({
+        shopName: productsTable.shopName,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(productsTable)
+      .where(and(eq(productsTable.status, "published"), ne(productsTable.shopName, "")))
+      .groupBy(productsTable.shopName)
+      .having(sql`count(*) >= 2`);
+
+    for (const r of brandRows) {
+      if (!r.shopName) continue;
+      const slug = r.shopName
+        .toLowerCase()
+        .replace(/&/g, "and")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      if (!slug) continue;
+      urls.push(
+        `<url><loc>${base}/brand/${slug}</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>`,
+      );
+    }
+
+    // Koleksi pages — satu URL per tag (≥3 produk)
+    try {
+      const koleksiRows = await db.execute<{ tag: string; count: number }>(sql`
+        SELECT lower(jsonb_array_elements_text(tags)) AS tag,
+               count(*)::int AS count
+        FROM products
+        WHERE status = 'published'
+          AND tags IS NOT NULL
+          AND jsonb_array_length(tags) > 0
+        GROUP BY tag
+        HAVING count(*) >= 3
+      `);
+      const list =
+        (koleksiRows as unknown as { rows?: Array<{ tag: string; count: number }> }).rows ??
+        (koleksiRows as unknown as Array<{ tag: string; count: number }>);
+      for (const r of list) {
+        const slug = String(r.tag)
+          .toLowerCase()
+          .replace(/&/g, "and")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "");
+        if (!slug) continue;
+        urls.push(
+          `<url><loc>${base}/koleksi/${slug}</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>`,
+        );
+      }
+    } catch {
+      /* best-effort: skip koleksi if tag query fails */
+    }
 
     // Best-of pages — satu URL per kategori (hanya kategori yang punya ≥3 produk)
     const bestOfRows = await db

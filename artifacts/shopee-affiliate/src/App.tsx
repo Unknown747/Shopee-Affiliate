@@ -23,6 +23,11 @@ const TrendingPage = lazy(() => import("@/pages/TrendingPage"));
 const BestOfIndex = lazy(() => import("@/pages/BestOfIndex"));
 const BestOfDetail = lazy(() => import("@/pages/BestOfDetail"));
 const PriceDrops = lazy(() => import("@/pages/PriceDrops"));
+const VsPage = lazy(() => import("@/pages/VsPage"));
+const BrandIndex = lazy(() => import("@/pages/BrandIndex"));
+const BrandDetail = lazy(() => import("@/pages/BrandDetail"));
+const KoleksiIndex = lazy(() => import("@/pages/KoleksiIndex"));
+const KoleksiDetail = lazy(() => import("@/pages/KoleksiDetail"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient({
@@ -77,6 +82,11 @@ function Router() {
       <Route path="/terbaik" component={BestOfIndex} />
       <Route path="/terbaik/:slug" component={BestOfDetail} />
       <Route path="/harga-turun" component={PriceDrops} />
+      <Route path="/vs/:pair" component={VsPage} />
+      <Route path="/brand" component={BrandIndex} />
+      <Route path="/brand/:slug" component={BrandDetail} />
+      <Route path="/koleksi" component={KoleksiIndex} />
+      <Route path="/koleksi/:slug" component={KoleksiDetail} />
       <Route component={NotFound} />
     </Switch>
   );

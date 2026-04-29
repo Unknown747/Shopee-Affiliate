@@ -439,6 +439,87 @@ export async function injectSeo(
     };
   }
 
+  if (path === "/brand" || path === "/brand/") {
+    return {
+      html: injectIntoHead(
+        html,
+        buildMetaBlock({
+          title: `Brand & Toko Pilihan | ${SITE_NAME}`,
+          description:
+            "Daftar brand dan toko Shopee yang paling sering kami review. Eksplor produk dari brand favorit Anda.",
+          canonical,
+        }),
+      ),
+      status: 200,
+    };
+  }
+
+  const brandMatch = path.match(/^\/brand\/([^/?#]+)\/?$/);
+  if (brandMatch) {
+    const slug = brandMatch[1]!;
+    const readable = slug.replace(/-/g, " ");
+    return {
+      html: injectIntoHead(
+        html,
+        buildMetaBlock({
+          title: `Produk dari ${readable} — Review & Harga | ${SITE_NAME}`,
+          description: `Daftar produk dari ${readable} yang kami review. Cek rating, harga, dan kelebihan tiap produk sebelum beli.`,
+          canonical,
+        }),
+      ),
+      status: 200,
+    };
+  }
+
+  if (path === "/koleksi" || path === "/koleksi/") {
+    return {
+      html: injectIntoHead(
+        html,
+        buildMetaBlock({
+          title: `Koleksi Tematik | ${SITE_NAME}`,
+          description:
+            "Eksplor produk berdasarkan tag tematik — dari budget, segmen pengguna, hingga use-case spesifik. Update otomatis dari katalog.",
+          canonical,
+        }),
+      ),
+      status: 200,
+    };
+  }
+
+  const koleksiMatch = path.match(/^\/koleksi\/([^/?#]+)\/?$/);
+  if (koleksiMatch) {
+    const slug = koleksiMatch[1]!;
+    const readable = slug.replace(/-/g, " ");
+    return {
+      html: injectIntoHead(
+        html,
+        buildMetaBlock({
+          title: `Koleksi ${readable} — Pilihan Produk Terbaik | ${SITE_NAME}`,
+          description: `Eksplor produk dalam koleksi "${readable}" — dipilih dari katalog Shopee dengan rating dan minat pembaca terbaik.`,
+          canonical,
+        }),
+      ),
+      status: 200,
+    };
+  }
+
+  const vsMatch = path.match(/^\/vs\/([^/?#]+)\/?$/);
+  if (vsMatch) {
+    const pair = vsMatch[1]!;
+    const readable = pair.replace(/-vs-/g, " vs ").replace(/-/g, " ");
+    return {
+      html: injectIntoHead(
+        html,
+        buildMetaBlock({
+          title: `${readable} — Mana yang Lebih Worth? | ${SITE_NAME}`,
+          description: `Bandingkan ${readable}: harga, rating, jumlah terjual, kelebihan & kekurangan masing-masing.`,
+          canonical,
+        }),
+      ),
+      status: 200,
+    };
+  }
+
   if (path === "/trending") {
     return {
       html: injectIntoHead(
